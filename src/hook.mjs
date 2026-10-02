@@ -19,7 +19,7 @@ export async function run(event, input, env = process.env) {
   const config = await loadConfig(projectDir);
   const backend = await selectBackend(env);
   if (!backend) return null;
-  const ctx = { input, threshold: config.threshold, backend: guarded(backend), timeoutMs: timeoutFor(backend) };
+  const ctx = { input, projectDir, threshold: config.threshold, backend: guarded(backend), timeoutMs: timeoutFor(backend) };
 
   let result = null;
   let toOutput = null;
@@ -82,7 +82,9 @@ async function main() {
     await log({ event, outcome: 'error', error: String(e?.message ?? e).slice(0, 120), ms: Date.now() - started });
     if (process.env.FLINCH_DEBUG) process.stderr.write(`flinch: ${e?.stack ?? e}\n`);
   }
-  process.exit(0);
+  // Let Node exit on its own. process.exit() while a fetch socket is still
+  // closing aborts Node on Windows (libuv assertion in win/async.c).
+  process.exitCode = 0;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

@@ -105,7 +105,7 @@ The rules check works from your project's own rules. Write them in `.flinch/rule
 
 **Getting started.** Copy a starter set from [`examples/`](examples/) and edit it, or (*coming*) run `flinch rules init` to draft the file from your `CLAUDE.md` / `AGENTS.md`. Then trim it. Ten sharp rules beat forty vague ones.
 
-**Commit it.** `.flinch/rules.json` belongs in your repository, so everyone on the team, and every agent, is held to the same rules.
+**Commit it.** `.flinch/rules.json` belongs in your repository, so everyone on the team, and every agent, is held to the same rules. If you keep it local instead, Flinch still finds it from any git worktree of the same repository.
 
 ### Writing rules that work
 

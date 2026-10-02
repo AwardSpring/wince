@@ -5,9 +5,9 @@ import { decide } from '../score.mjs';
 import { validVerdict } from '../verdict.mjs';
 import { fileKind } from '../log.mjs';
 
-export async function checkRules({ input, rules, threshold, backend, timeoutMs }) {
+export async function checkRules({ input, projectDir, rules, threshold, backend, timeoutMs }) {
   if (!EDIT_TOOLS.has(input.tool_name)) return null;
-  const filePath = projectPath(input.tool_input?.file_path, input.cwd);
+  const filePath = projectPath(input.tool_input?.file_path, projectDir ?? input.cwd);
   const applicable = rulesFor(filePath, rules);
   if (applicable.length === 0) return null;
 
