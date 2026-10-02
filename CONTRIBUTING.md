@@ -19,12 +19,13 @@ npm install
 npm test
 ```
 
-To try your local copy in Claude Code:
+To try your local copy in Claude Code without installing it:
 
+```bash
+claude --plugin-dir ./path/to/flinch
 ```
-/plugin marketplace add ./path/to/flinch
-/plugin install flinch@flinch
-```
+
+Then check `~/.claude/plugins/data/flinch-inline/log.jsonl` to see what each check decided.
 
 Set `FLINCH_DEBUG=1` to log every check, its input size, the backend, latency, and the verdict to stderr.
 
@@ -37,7 +38,7 @@ Set `FLINCH_DEBUG=1` to log every check, its input size, the backend, latency, a
 
 ## Evals
 
-Changes to a check's prompt, threshold, or input must include eval results. `evals/` holds labeled cases, real tool calls and edits each marked with the verdict a careful reviewer would give:
+Changes to a check's prompt, threshold, or input must include eval results. Labeled cases are real tool calls and edits, each marked with the verdict a careful reviewer would give. Keep them in `cases/` (not `evals/`, which `claude plugin eval` reserves):
 
 ```bash
 npm run eval -- --rules examples/dotnet.json --cases path/to/cases.jsonl --backend claude-cli

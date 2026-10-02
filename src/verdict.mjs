@@ -7,3 +7,7 @@ export function parseVerdict(text, choices) {
   if (!Number.isFinite(value)) throw new Error('confidence is not a number');
   return { choice, confidence: Math.min(1, Math.max(0, value)) };
 }
+
+export function validVerdict(verdict, choices) {
+  return Boolean(verdict) && choices.includes(verdict.choice) && Number.isFinite(verdict.confidence);
+}

@@ -30,11 +30,22 @@ Checked against code.claude.com/docs/en/hooks (2026-10-01). Items marked **verif
 ## Failure behavior
 
 - A timeout or error is non-blocking unless the hook exits 2. Flinch never exits 2 on its own failure: it catches everything and exits 0 with no output.
-- Each hook sets its own `timeout` to a few seconds, not the 600s default. The Jev call is capped at about 500ms and then fails open.
+- `hooks.json` gives each hook a 30s `timeout`. Inside it, every backend call has its own limit (Anthropic 3s, `claude-cli` 20s), and a 25s hard deadline returns nothing. Every limit fails open.
 
-## Verify empirically
+## Confirmed in a live session (Claude Code 2.1.285, 2026-10-02)
 
-1. **Stop-loop guard.** The docs page fetched didn't confirm a `stop_hook_active` input field. Until a test confirms it, Flinch blocks a stop at most once per user prompt, tracked in its own state.
-2. **Parallel vs sequential.** It's unclear whether multiple hooks on the same event run in parallel or one after another. This affects total latency when a user has other hooks installed.
-3. **`async` / `asyncRewake`.** Flinch could run the rule check in the background and wake Claude only on a hit, adding zero latency to clean edits. The timing still needs measuring.
-4. **Prompt and agent hooks (`type: "prompt"` / `"agent"`).** These run a model natively, but their 30s / 60s figures are timeouts, not measured latency. They still need to be benchmarked against Jev to see whether Jev's speed advantage is real here.
+Run headless with `claude -p --plugin-dir <repo>` against a scratch project:
+
+- PostToolUse `hookSpecificOutput.additionalContext` reaches the agent. It quoted the nudge back verbatim.
+- PostToolUse `decision: "block"` with `reason` works. The agent rewrote the offending edit itself (`any` to `unknown`).
+- Stop `systemMessage` is shown to the user as "Stop says: ...".
+- Stop `decision: "block"` sends the agent back once. The second Stop arrives with `stop_hook_active` set, and Flinch stays quiet, so there is no loop.
+- `${CLAUDE_PLUGIN_ROOT}` resolves, and `CLAUDE_PLUGIN_DATA` is `~/.claude/plugins/data/flinch-inline/` for a `--plugin-dir` load.
+- Latency on the `claude-cli` backend is 3.5 to 4.3 seconds per check, run inline.
+
+## Still to verify
+
+1. Whether several hooks on the same event run in parallel or one after another.
+2. `async` / `asyncRewake`: the docs list the fields but not how output is delivered. Test before moving the slower backends to background checks.
+3. Prompt and agent hooks (`type: "prompt"` / `"agent"`): benchmark their real latency against Jev.
+4. The `userConfig` env var is `CLAUDE_PLUGIN_OPTION_<KEY>` with the key uppercased, per the docs. Confirm when the Jev key option lands.
