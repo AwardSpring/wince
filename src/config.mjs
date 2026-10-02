@@ -6,6 +6,7 @@ export const DEFAULTS = Object.freeze({
   mode: 'nudge',
   checks: { rules: true, done: true, risky: true },
   threshold: 0.6,
+  subagents: 'send-back',
   rules: '.flinch/rules.json',
 });
 

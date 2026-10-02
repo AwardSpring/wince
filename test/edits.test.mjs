@@ -48,3 +48,7 @@ test('unverifiedEdits is true only when no check ran after the last edit', () =>
   assert.equal(unverifiedEdits([{ name: 'Edit', input: {} }, { name: 'Bash', input: { command: 'ls -la' } }]), true);
   assert.equal(unverifiedEdits([{ name: 'Read', input: {} }]), false);
 });
+
+test('a PowerShell test run counts as verification', () => {
+  assert.equal(unverifiedEdits([{ name: 'Edit', input: {} }, { name: 'PowerShell', input: { command: 'npm test' } }]), false);
+});

@@ -44,6 +44,10 @@ export async function run(event, input, env = process.env) {
     const records = await readTranscript(input.transcript_path);
     result = await checkDone({ ...ctx, records });
     toOutput = stopOutput;
+  } else if (event === 'subagent-stop' && config.checks.done) {
+    const records = await readTranscript(input.agent_transcript_path);
+    result = await checkDone({ ...ctx, records, subagent: true });
+    toOutput = (finding) => subagentStopOutput(finding, config.subagents);
   }
   if (!result) return null;
 
@@ -71,6 +75,15 @@ export function postToolUseOutput(finding, mode) {
   const notice = finding.notice ? { systemMessage: finding.notice } : {};
   if (mode === 'block') return { decision: 'block', reason: finding.message, ...notice };
   return { hookSpecificOutput: { hookEventName: 'PostToolUse', additionalContext: finding.message }, ...notice };
+}
+
+// Claude Code drops a SubagentStop hook's systemMessage and
+// additionalContext, so the only way to act on a subagent is to send it
+// back. That happens in nudge mode too: it is agent to agent and never
+// interrupts the user. "subagents": "log" turns it into a log line only.
+export function subagentStopOutput(finding, subagents = 'send-back') {
+  if (subagents === 'log') return null;
+  return { decision: 'block', reason: finding.message };
 }
 
 export function stopOutput(finding, mode) {
