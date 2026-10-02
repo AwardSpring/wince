@@ -2,13 +2,13 @@
   <img src="docs/assets/flinch.png" alt="Flinch: your coding agent flinches before the mistake." width="360">
 </p>
 
-Flinch is a [Claude Code](https://code.claude.com) plugin that watches each step your agent takes. It asks a fast classifier a yes-or-no question about the step and nudges the agent when something looks wrong. You don't have to be watching: it catches loops, risky commands, broken project rules, and "done!" claims that were never checked.
+Flinch is a [Claude Code](https://code.claude.com) plugin that watches each step your agent takes and speaks up when something looks wrong. You don't have to be watching: it catches edits that break your project's rules, risky commands, and "done!" claims that were never checked.
 
 > **Status: pre-release.** Flinch is in active development and not yet published. The **rules**, **unproven done** and **risky command** checks work today. The other checks and the `flinch` commands are designed but not built yet, and are marked *coming* below.
 
 ```
-● Bash(dotnet test)  ✗ 3 failed
-  ⤷ flinch: same failure 3 times in a row. Stop retrying, read the error, change approach.
+● Bash(git reset --hard origin/main)
+  ⤷ flinch: this command throws away uncommitted changes. Allow it?
 
 ● Edit(src/Orders/OrderQueries.cs)
   ⤷ flinch: this edit may break "tenant-filter": every query on a tenant-owned table filters by TenantId.
@@ -24,10 +24,11 @@ Flinch is a [Claude Code](https://code.claude.com) plugin that watches each step
 | **Your rules** | After each edit | Code that breaks a rule from your own project rules (see [Rules](#rules)) | available |
 | **Unproven done** | When the agent tries to finish | Claiming success with no test or build run since the last edit | available |
 | **Risky command** | Before each shell command | Destructive or outward-facing commands: force-push, `rm -rf`, publishing, deploying | available |
-| **Stuck** | After each tool call | The same failure again and again, editing in circles, flailing | *coming* |
 | **Drift** | After each tool call | Work that has wandered away from what you asked for | *coming* |
 
 Every check can be turned on or off on its own.
+
+We also built a *stuck* check (the same command failing again and again, or editing in circles) and measured it on 5,000 real agent turns before shipping. It never fired: current models read the error and change course on their own. So it isn't included.
 
 ## How well it works
 
@@ -80,7 +81,7 @@ A risky command always stops before it runs. In nudge mode Claude Code asks you 
 // .flinch.json in your project root (all fields optional)
 {
   "mode": "nudge",
-  "checks": { "stuck": true, "risky": true, "done": true, "rules": true, "drift": false },
+  "checks": { "rules": true, "done": true, "risky": true },
   "threshold": 0.6,
   "rules": ".flinch/rules.json"
 }

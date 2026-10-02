@@ -6,8 +6,7 @@ Checked against code.claude.com/docs/en/hooks (2026-10-01). Items marked **verif
 
 | Check | Event | Output |
 |---|---|---|
-| Risky command | `PreToolUse` (Bash) | `hookSpecificOutput.permissionDecision`: `ask` (nudge mode) or `deny` (block mode), with `permissionDecisionReason` |
-| Stuck / looping | `PostToolUse` | `hookSpecificOutput.additionalContext`, which Claude sees as context, not as an error |
+| Risky command | `PreToolUse` (Bash, PowerShell) | `hookSpecificOutput.permissionDecision`: `ask` (nudge mode) or `deny` (block mode), with `permissionDecisionReason` |
 | Rule check | `PostToolUse` (Edit, Write, MultiEdit) | `additionalContext` (nudge mode); block mode is still to be decided |
 | Done without proof | `Stop`, `SubagentStop` | `decision: "block"` plus a reason, so Claude keeps working |
 | Drift | `UserPromptSubmit` records the task; `PostToolUse` compares against it | `additionalContext` |
