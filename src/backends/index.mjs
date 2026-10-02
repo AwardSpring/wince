@@ -1,9 +1,10 @@
+import * as jev from './jev.mjs';
 import * as anthropic from './anthropic.mjs';
 import * as claudeCli from './claude-cli.mjs';
 
-const ORDER = [anthropic, claudeCli];
+const ORDER = [jev, anthropic, claudeCli];
 
-const TIMEOUT_MS = { anthropic: 3000, 'claude-cli': 20_000, fake: 1000 };
+const TIMEOUT_MS = { jev: 1500, anthropic: 3000, 'claude-cli': 20_000, fake: 1000 };
 
 export function timeoutFor(backend) {
   return TIMEOUT_MS[backend.name] ?? 3000;

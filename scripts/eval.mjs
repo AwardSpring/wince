@@ -17,6 +17,10 @@ const { values: opts } = parseArgs({
   },
 });
 
+if (!process.env.TYPESAFE_API_KEY) {
+  const key = (await readFile('private/jev.key', 'utf8').catch(() => '')).trim();
+  if (key) process.env.TYPESAFE_API_KEY = key;
+}
 const backend = await import(`../src/backends/${opts.backend}.mjs`);
 const rules = await loadRules(opts.rules);
 const adjudication = JSON.parse(await readFile(opts.adjudication, 'utf8').catch(() => '{}'));
@@ -45,10 +49,10 @@ async function runCase(c) {
   if (applicable.length === 0) {
     return { id: c.id, expected: c.expected, accepted, said: NONE, raw: null, confidence: null, ms: 0, skipped: 'no applicable rules' };
   }
-  const { question, choices } = ruleCheck({ rules: applicable, filePath: c.file_path, diff: c.diff });
+  const { question, choices, descriptions } = ruleCheck({ rules: applicable, filePath: c.file_path, diff: c.diff });
   const started = performance.now();
   try {
-    const verdict = await backend.classify(question, choices, { model: opts.model });
+    const verdict = await backend.classify(question, choices, { model: opts.model, descriptions });
     const ms = Math.round(performance.now() - started);
     const said = decide(verdict, threshold);
     return { id: c.id, expected: c.expected, accepted, said, raw: verdict.choice, confidence: verdict.confidence, ms, apiMs: verdict.apiMs };
