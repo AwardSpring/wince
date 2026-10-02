@@ -10,7 +10,7 @@ Thanks for helping. Bug reports, new checks, better prompts, and eval cases are 
 
 ## Development setup
 
-Requirements: Node.js 20+ and Claude Code.
+Requirements: Node.js 22+ and Claude Code.
 
 ```bash
 git clone https://github.com/awardspring/flinch

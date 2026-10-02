@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { parseVerdict } from '../verdict.mjs';
 
 const SYSTEM = 'You classify code edits. Reply with only a JSON object {"choice": string, "confidence": number}. choice must be exactly one of the listed choices. confidence is 0 to 1. Write nothing else.';
 
@@ -47,10 +48,3 @@ export function classify(question, choices, { timeoutMs = 120_000, model = 'haik
   });
 }
 
-function parseVerdict(text, choices) {
-  const match = String(text).match(/\{[^{}]*\}/);
-  if (!match) throw new Error('no JSON object in reply');
-  const { choice, confidence } = JSON.parse(match[0]);
-  if (!choices.includes(choice)) throw new Error(`choice "${choice}" not in list`);
-  return { choice, confidence: Number(confidence) };
-}

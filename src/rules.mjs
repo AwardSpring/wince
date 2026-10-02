@@ -6,10 +6,12 @@ export async function loadRules(path) {
 }
 
 export function rulesFor(filePath, rules) {
-  const normalized = filePath.replaceAll('\\', '/');
+  const normalized = filePath.replaceAll('\\', '/').replace(/^\.\//, '');
   return rules.filter((r) => (r.applies ?? ['**/*']).some((g) => globToRegExp(g).test(normalized)));
 }
 
+// Gitignore-style: a pattern without a slash matches the file name at any
+// depth; a pattern with a slash is anchored to the project root.
 export function globToRegExp(glob) {
   let out = '';
   for (let i = 0; i < glob.length; i++) {
@@ -26,5 +28,6 @@ export function globToRegExp(glob) {
       out += c.replace(/[.+^${}()|[\]\\]/g, '\\$&');
     }
   }
-  return new RegExp(`^(?:.*/)?${out}$`);
+  const anchored = glob.includes('/');
+  return new RegExp(anchored ? `^${out}$` : `^(?:.*/)?${out}$`);
 }

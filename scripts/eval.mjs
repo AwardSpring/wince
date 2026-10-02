@@ -2,6 +2,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 import { loadRules, rulesFor } from '../src/rules.mjs';
 import { ruleCheck, NONE } from '../src/prompt.mjs';
+import { decide, score, percentile } from '../src/score.mjs';
 
 const { values: opts } = parseArgs({
   options: {
@@ -49,7 +50,7 @@ async function runCase(c) {
   try {
     const verdict = await backend.classify(question, choices, { model: opts.model });
     const ms = Math.round(performance.now() - started);
-    const said = verdict.choice !== NONE && verdict.confidence >= threshold ? verdict.choice : NONE;
+    const said = decide(verdict, threshold);
     return { id: c.id, expected: c.expected, accepted, said, raw: verdict.choice, confidence: verdict.confidence, ms, apiMs: verdict.apiMs };
   } catch (e) {
     return { id: c.id, expected: c.expected, accepted, said: NONE, raw: null, confidence: null, ms: Math.round(performance.now() - started), error: e.message };
@@ -60,16 +61,10 @@ await Promise.all(Array.from({ length: Number(opts.concurrency) }, worker));
 process.stderr.write('\n');
 results.sort((a, b) => a.id.localeCompare(b.id));
 
-const violations = results.filter((r) => r.expected !== NONE);
-const clean = results.filter((r) => r.expected === NONE);
-const ok = (r) => r.accepted.includes(r.said);
-const caught = violations.filter(ok);
-const wrongRule = violations.filter((r) => !ok(r) && r.said !== NONE);
-const missed = violations.filter((r) => r.said === NONE && !ok(r));
-const falseAlarms = clean.filter((r) => r.said !== NONE);
+const { caught, wrongRule, missed, falseAlarms, violations, clean } = score(results);
 const errors = results.filter((r) => r.error);
 const times = results.filter((r) => !r.skipped && !r.error).map((r) => r.ms).sort((a, b) => a - b);
-const pct = (p) => (times.length ? times[Math.min(times.length - 1, Math.floor(p * times.length))] : 0);
+const pct = (p) => percentile(times, p);
 
 const summary = {
   backend: opts.backend,

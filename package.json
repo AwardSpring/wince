@@ -5,8 +5,11 @@
   "license": "MIT",
   "type": "module",
   "private": true,
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
+    "test": "node --test",
     "eval": "node scripts/eval.mjs"
   }
 }
