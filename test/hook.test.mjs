@@ -222,3 +222,26 @@ test('flagged risky commands are logged without the command text', () => {
   assert.equal(entry.id, 'force-push');
   assert.doesNotMatch(raw, /secret-branch-name/);
 });
+
+test('a rule nudge also shows the user a one-line notice', () => {
+  const dir = project();
+  const json = JSON.parse(runHook('post-tool-use', edit(dir), { dir, env: { FLINCH_FAKE: 'no-any' } }).stdout);
+  assert.equal(json.systemMessage, 'Flinch flagged "no-any" in a.ts');
+});
+
+test('stand-downs and session starts are logged with a short session id', () => {
+  const dir = project();
+  const css = { ...edit(dir), session_id: 'abcdef1234567890', tool_input: { file_path: join(dir, 'a.css'), old_string: 'a', new_string: 'b' } };
+  runHook('post-tool-use', css, { dir, env: { FLINCH_FAKE: 'no-any' } });
+  runHook('session-start', { session_id: 'abcdef1234567890' }, { dir });
+  const tested = transcript(dir, [prompt, toolUse('Edit', {}), toolUse('Bash', { command: 'npm test' }), said('Done.')]);
+  runHook('stop', { transcript_path: tested, session_id: 'abcdef1234567890' }, { dir, env: { FLINCH_FAKE: 'claims-done' } });
+  const lines = logLines(dir);
+  assert.deepEqual(lines.map((e) => [e.check, e.outcome, e.reason]), [
+    ['rules', 'skipped', 'no-matching-rules'],
+    ['session', 'started', undefined],
+    ['done', 'skipped', 'verified'],
+  ]);
+  assert.ok(lines.every((e) => e.session === 'abcdef12'));
+  assert.ok(lines.every((e) => !('backend' in e)), 'stand-downs never called a backend');
+});

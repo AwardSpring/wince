@@ -17,4 +17,7 @@ Initial development toward 0.1.0.
 - Inside a git worktree with no Flinch files of its own, the main checkout's `.flinch.json` and rules apply, so local-only rules cover every worktree.
 - Risky command check: before every Bash and PowerShell command, stops force-pushes, discarding uncommitted changes, remote branch deletes, deletes outside the project, publishing, deploying and dropping tables on a remote database. Nudge mode asks the user; block mode refuses. Pattern-based, about 10ms, no backend.
 - `FLINCH_LOG_DIR` overrides where the log is written.
+- A rule nudge also shows the user a one-line notice naming the rule and the file.
+- Checks that stand down are logged: an edit no rule covers, and a finish after tests already ran. Session starts are logged too, and every entry carries a short session id.
+- `flinch log` shows when the last check ran and how many checks stood down. `flinch statusline` prints a one-line summary of the current session for Claude Code's status line, and nothing for sessions without Flinch.
 - Fails open on any backend error, timeout, malformed input or bad config.

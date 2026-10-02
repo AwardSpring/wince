@@ -4,12 +4,13 @@ import { EDIT_TOOLS, editToDiff, projectPath, capDiff } from '../edits.mjs';
 import { decide } from '../score.mjs';
 import { validVerdict } from '../verdict.mjs';
 import { fileKind } from '../log.mjs';
+import { basename } from 'node:path';
 
 export async function checkRules({ input, projectDir, rules, threshold, backend, timeoutMs }) {
   if (!EDIT_TOOLS.has(input.tool_name)) return null;
   const filePath = projectPath(input.tool_input?.file_path, projectDir ?? input.cwd);
   const applicable = rulesFor(filePath, rules);
-  if (applicable.length === 0) return null;
+  if (applicable.length === 0) return { trace: { check: 'rules', kind: fileKind(filePath), outcome: 'skipped', reason: 'no-matching-rules' } };
 
   const diff = capDiff(editToDiff(input.tool_name, input.tool_input ?? {}));
   const { question, choices, descriptions } = ruleCheck({ rules: applicable, filePath, diff });
@@ -24,6 +25,11 @@ export async function checkRules({ input, projectDir, rules, threshold, backend,
   const rule = applicable.find((r) => r.id === said);
   return {
     trace: { ...trace, outcome: 'flagged' },
-    finding: { check: 'rules', id: said, message: `Flinch: this edit to ${filePath} may break "${rule.id}": ${rule.rule}` },
+    finding: {
+      check: 'rules',
+      id: said,
+      message: `Flinch: this edit to ${filePath} may break "${rule.id}": ${rule.rule}`,
+      notice: `Flinch flagged "${rule.id}" in ${basename(filePath)}`,
+    },
   };
 }
