@@ -1,0 +1,11 @@
+{
+  "rules": [
+    { "id": "no-any", "applies": ["**/*.ts", "**/*.tsx"], "rule": "Do not add the 'any' type; use a specific type or 'unknown'." },
+    { "id": "no-ts-ignore", "applies": ["**/*.ts", "**/*.tsx"], "rule": "Do not add @ts-ignore or @ts-nocheck comments." },
+    { "id": "no-console", "applies": ["src/**/*.ts", "src/**/*.tsx"], "rule": "Do not add console.log calls to application code." },
+    { "id": "hook-deps", "applies": ["**/*.tsx"], "rule": "Every value from component scope used inside useEffect, useMemo or useCallback is listed in its dependency array." },
+    { "id": "no-dangerous-html", "applies": ["**/*.tsx"], "rule": "Do not use dangerouslySetInnerHTML." },
+    { "id": "list-keys", "applies": ["**/*.tsx"], "rule": "Elements rendered from an array map have a stable key that is not the array index." },
+    { "id": "no-secrets", "applies": ["**/*"], "rule": "Do not add API keys, tokens or passwords as string literals." }
+  ]
+}

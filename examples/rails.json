@@ -1,0 +1,11 @@
+{
+  "rules": [
+    { "id": "strong-params", "applies": ["app/controllers/**/*.rb"], "rule": "Controllers pass params to models only through a permit list; never params.permit! or raw params hashes." },
+    { "id": "no-sql-interpolation", "applies": ["**/*.rb"], "rule": "Do not interpolate values into SQL strings in where, order or find_by_sql; use placeholders." },
+    { "id": "no-n-plus-one", "applies": ["app/views/**/*", "app/controllers/**/*.rb"], "rule": "Associations used inside a loop over a collection are loaded with includes or preload." },
+    { "id": "no-skip-callbacks", "applies": ["**/*.rb"], "rule": "Do not add update_column, update_all or save(validate: false) in application code." },
+    { "id": "reversible-migrations", "applies": ["db/migrate/**/*.rb"], "rule": "Migrations use change with reversible operations, or define both up and down." },
+    { "id": "no-html-safe", "applies": ["app/**/*"], "rule": "Do not call html_safe or raw on values that include user input." },
+    { "id": "no-secrets", "applies": ["**/*"], "rule": "Do not add API keys, tokens or passwords as string literals; use credentials or ENV." }
+  ]
+}

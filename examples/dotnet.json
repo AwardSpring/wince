@@ -1,0 +1,11 @@
+{
+  "rules": [
+    { "id": "async-cancellation", "applies": ["**/*.cs"], "rule": "New async methods that do I/O take a CancellationToken and pass it to the calls they make." },
+    { "id": "no-async-void", "applies": ["**/*.cs"], "rule": "Do not declare async void methods, except event handlers." },
+    { "id": "no-blocking-on-async", "applies": ["**/*.cs"], "rule": "Do not call .Result or .Wait() on a Task." },
+    { "id": "thin-controllers", "applies": ["**/Controllers/**/*.cs"], "rule": "Controller actions call a service; no DbContext queries in controllers." },
+    { "id": "no-dbcontext-whenall", "applies": ["**/*.cs"], "rule": "Do not run two operations on the same DbContext at once with Task.WhenAll." },
+    { "id": "no-raw-sql-concat", "applies": ["**/*.cs"], "rule": "Do not build SQL by concatenating or interpolating strings into FromSqlRaw or ExecuteSqlRaw; use parameters." },
+    { "id": "no-secrets", "applies": ["**/*"], "rule": "Do not add connection strings, API keys or passwords as string literals." }
+  ]
+}

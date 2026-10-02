@@ -67,7 +67,7 @@ Each check is one small multiple-choice question. Flinch sends it to the fastest
 
 ## Rules
 
-The rules check works from a short list of your project's rules, with one sentence for each:
+The rules check works from your project's own rules. Write them in `.flinch/rules.json`, one sentence each:
 
 ```json
 {
@@ -78,7 +78,44 @@ The rules check works from a short list of your project's rules, with one senten
 }
 ```
 
-`flinch rules init` reads your `CLAUDE.md` / `AGENTS.md` and drafts this file for you to edit. Only rules whose `applies` patterns match the edited file are sent with each check.
+| Field | Meaning |
+|---|---|
+| `id` | Short name, shown in nudges and in `flinch log` |
+| `applies` | File patterns the rule covers. Only rules matching the edited file are sent with a check, so narrow patterns keep checks fast and accurate |
+| `rule` | One sentence the agent's edit is judged against |
+
+**Getting started.** Run `flinch rules init` to draft the file from your `CLAUDE.md` / `AGENTS.md`, or copy a starter set from [`examples/`](examples/) and edit it. Then trim it. Ten sharp rules beat forty vague ones.
+
+**Commit it.** `.flinch/rules.json` belongs in your repository, so everyone on the team, and every agent, is held to the same rules.
+
+### Writing rules that work
+
+Flinch judges one edit at a time, with nothing but the rule and the changed lines. A good rule is one a careful reviewer could check by looking at just that diff.
+
+| Works well | Works poorly | Why |
+|---|---|---|
+| "Every query on a tenant-owned table filters by TenantId." | "Keep tenant data isolated." | Name the thing you'd see in the code |
+| "No raw hex colors in stylesheets; use the color tokens." | "Follow the design system." | One concrete check, not a whole document |
+| "Controller actions only call a service; no database queries in controllers." | "Keep controllers thin." | "Thin" is a judgment; "no queries" is visible |
+| "Async functions that do I/O take a cancellation token." | "Write good async code." | Vague rules turn into false alarms |
+
+Avoid rules about taste, tone, or comment style. In our own testing, judgment-call rules caused most of the false alarms while concrete rules stayed accurate. If a rule needs context outside the edit to decide, such as "this file must also be registered elsewhere", Flinch can't see it and will stay quiet.
+
+### Test your rules
+
+Before you turn on block mode, check your rules against real edits from your own history:
+
+```bash
+flinch eval --rules .flinch/rules.json --cases .flinch/cases.jsonl
+```
+
+Each line of `cases.jsonl` is one real edit, labeled with the rule it breaks or `"none"`:
+
+```json
+{"id": "c01", "expected": "tenant-filter", "file_path": "src/Orders/OrderQueries.cs", "diff": "@@ ... @@\n+ var orders = db.Orders.Where(o => o.Status == status);"}
+```
+
+Include clean edits, especially near misses, as well as rule-breaking ones. `flinch eval` reports catches, misses, wrong-rule answers, and false alarms. A rule that raises false alarms should be rewritten to be more concrete, or removed.
 
 ## Commands
 
@@ -87,6 +124,7 @@ The rules check works from a short list of your project's rules, with one senten
 | `flinch status` | Active backend, mode, and enabled checks |
 | `flinch log` | What Flinch caught, when, and which backend decided |
 | `flinch rules init` | Draft `.flinch/rules.json` from your agent instructions |
+| `flinch eval` | Score your rules against a labeled set of real edits |
 
 ## Privacy
 

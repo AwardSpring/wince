@@ -1,0 +1,11 @@
+{
+  "rules": [
+    { "id": "no-bare-except", "applies": ["**/*.py"], "rule": "Do not add a bare 'except:' or 'except Exception: pass'." },
+    { "id": "no-print", "applies": ["src/**/*.py", "app/**/*.py"], "rule": "Use the logging module, not print, in application code." },
+    { "id": "no-sql-format", "applies": ["**/*.py"], "rule": "Do not build SQL with f-strings, % or .format(); pass query parameters." },
+    { "id": "no-mutable-defaults", "applies": ["**/*.py"], "rule": "Do not use a list, dict or set as a default argument value." },
+    { "id": "type-hints", "applies": ["src/**/*.py", "app/**/*.py"], "rule": "New public functions have type hints on parameters and return value." },
+    { "id": "requests-timeout", "applies": ["**/*.py"], "rule": "Every requests or httpx call passes a timeout." },
+    { "id": "no-secrets", "applies": ["**/*"], "rule": "Do not add API keys, tokens or passwords as string literals." }
+  ]
+}

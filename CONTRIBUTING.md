@@ -40,7 +40,7 @@ Set `FLINCH_DEBUG=1` to log every check, its input size, the backend, latency, a
 Changes to a check's prompt, threshold, or input must include eval results. `evals/` holds labeled cases, real tool calls and edits each marked with the verdict a careful reviewer would give:
 
 ```bash
-npm run eval -- --check rules --backend jev
+npm run eval -- --rules examples/dotnet.json --cases path/to/cases.jsonl --backend claude-cli
 ```
 
 When you add eval cases:
