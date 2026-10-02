@@ -11,7 +11,7 @@ const { values: opts } = parseArgs({
     rules: { type: 'string', default: 'private/rules/awardspring.json' },
     cases: { type: 'string', default: 'private/testset/cases.jsonl' },
     adjudication: { type: 'string', default: 'private/testset/adjudication.json' },
-    threshold: { type: 'string', default: '0.8' },
+    threshold: { type: 'string', default: '0.6' },
     concurrency: { type: 'string', default: '4' },
     limit: { type: 'string' },
   },

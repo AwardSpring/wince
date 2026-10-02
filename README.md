@@ -60,7 +60,7 @@ Each check is one small multiple-choice question. Flinch sends it to the fastest
 {
   "mode": "nudge",
   "checks": { "stuck": true, "risky": true, "done": true, "rules": true, "drift": false },
-  "threshold": 0.8,
+  "threshold": 0.6,
   "rules": ".flinch/rules.json"
 }
 ```
