@@ -1,0 +1,11 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "flinch",
+  "version": "0.1.0",
+  "description": "Your coding agent flinches before the mistake. Catches rule-breaking edits and unproven done claims.",
+  "author": { "name": "AwardSpring" },
+  "homepage": "https://github.com/AwardSpring/flinch",
+  "repository": "https://github.com/AwardSpring/flinch",
+  "license": "MIT",
+  "keywords": ["hooks", "guardrails", "code-review", "rules"]
+}

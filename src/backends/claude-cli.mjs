@@ -4,13 +4,17 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parseVerdict } from '../verdict.mjs';
 
-const SYSTEM = 'You classify code edits. Reply with only a JSON object {"choice": string, "confidence": number}. choice must be exactly one of the listed choices. confidence is 0 to 1. Write nothing else.';
+const SYSTEM = 'You answer one multiple-choice question. Reply with only a JSON object {"choice": string, "confidence": number}. choice must be exactly one of the listed choices. confidence is 0 to 1. Write nothing else.';
 
 // An empty working directory keeps the spawned session from loading the
 // watched project's CLAUDE.md into the judge.
 const quietCwd = mkdtempSync(join(tmpdir(), 'flinch-'));
 
 export const name = 'claude-cli';
+
+export function available() {
+  return true;
+}
 
 export function classify(question, choices, { timeoutMs = 120_000, model = 'haiku' } = {}) {
   const prompt = `${question}\n\nCHOICES: ${choices.join(', ')}`;

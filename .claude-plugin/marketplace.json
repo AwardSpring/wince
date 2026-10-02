@@ -1,0 +1,14 @@
+{
+  "name": "flinch",
+  "description": "Flinch, a Claude Code plugin that catches rule-breaking edits and unproven done claims.",
+  "owner": {
+    "name": "AwardSpring"
+  },
+  "plugins": [
+    {
+      "name": "flinch",
+      "source": "./",
+      "description": "Your coding agent flinches before the mistake."
+    }
+  ]
+}
