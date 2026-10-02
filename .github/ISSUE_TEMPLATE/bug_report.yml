@@ -1,0 +1,37 @@
+name: Bug report
+description: Flinch did something wrong, or stayed quiet when it should have spoken.
+labels: [bug]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What went wrong?
+      options:
+        - False alarm (Flinch flagged something fine)
+        - Missed catch (Flinch stayed quiet)
+        - Slowed down or blocked my agent
+        - Install or setup problem
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: status
+    attributes:
+      label: "`flinch status` output"
+      render: text
+  - type: textarea
+    id: log
+    attributes:
+      label: Relevant `flinch log` lines
+      description: Remove anything private first.
+      render: text
+  - type: input
+    id: versions
+    attributes:
+      label: Flinch, Claude Code, and OS versions

@@ -1,0 +1,12 @@
+{
+  "name": "@awardspring/flinch",
+  "version": "0.0.0",
+  "description": "Your coding agent flinches before the mistake.",
+  "license": "MIT",
+  "type": "module",
+  "private": true,
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "eval": "node scripts/eval.mjs"
+  }
+}

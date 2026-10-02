@@ -1,0 +1,20 @@
+name: Feature or new check
+description: Suggest a new check or a change in behavior.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What does your agent keep doing that Flinch should catch?
+      description: A real example helps most.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What should Flinch do about it?
+  - type: textarea
+    id: noise
+    attributes:
+      label: When would this be a false alarm?
+      description: Every check costs attention. Help us keep Flinch quiet when it should be.
