@@ -182,3 +182,43 @@ test('the log holds no file paths, code or rule text', () => {
   assert.equal(entry.backend, 'fake');
   assert.doesNotMatch(raw, /a\.ts|src|any type|let x/);
 });
+
+const shell = (command, tool = 'Bash') => ({ hook_event_name: 'PreToolUse', tool_name: tool, tool_input: { command } });
+
+test('a risky command asks the user first in nudge mode', () => {
+  const dir = project();
+  const json = JSON.parse(runHook('pre-tool-use', shell('git push --force'), { dir }).stdout);
+  assert.equal(json.hookSpecificOutput.hookEventName, 'PreToolUse');
+  assert.equal(json.hookSpecificOutput.permissionDecision, 'ask');
+  assert.match(json.hookSpecificOutput.permissionDecisionReason, /force-pushes/);
+});
+
+test('a risky command is refused in block mode', () => {
+  const dir = project({ config: { mode: 'block' } });
+  const json = JSON.parse(runHook('pre-tool-use', shell('git reset --hard', 'PowerShell'), { dir }).stdout);
+  assert.equal(json.hookSpecificOutput.permissionDecision, 'deny');
+});
+
+test('the risky check needs no backend and no rules file', () => {
+  const dir = project({ rules: false });
+  const out = runHook('pre-tool-use', shell('npm publish'), { dir, env: { FLINCH_BACKEND: 'none-such', TYPESAFE_API_KEY: '', ANTHROPIC_API_KEY: '' } });
+  assert.equal(JSON.parse(out.stdout).hookSpecificOutput.permissionDecision, 'ask');
+});
+
+test('the risky check stays silent on safe commands, other tools, and when turned off', () => {
+  const dir = project();
+  assert.equal(runHook('pre-tool-use', shell('git status'), { dir }).stdout, '');
+  assert.equal(runHook('pre-tool-use', { tool_name: 'Read', tool_input: { file_path: 'x' } }, { dir }).stdout, '');
+  const off = project({ config: { checks: { risky: false } } });
+  assert.equal(runHook('pre-tool-use', shell('git push --force'), { dir: off }).stdout, '');
+});
+
+test('flagged risky commands are logged without the command text', () => {
+  const dir = project();
+  runHook('pre-tool-use', shell('git push --force origin secret-branch-name'), { dir });
+  const raw = readFileSync(join(dir, '.data', 'log.jsonl'), 'utf8');
+  const [entry] = logLines(dir);
+  assert.equal(entry.check, 'risky');
+  assert.equal(entry.id, 'force-push');
+  assert.doesNotMatch(raw, /secret-branch-name/);
+});

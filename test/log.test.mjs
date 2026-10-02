@@ -80,3 +80,9 @@ test('entries from older versions or with missing fields never break the summary
   assert.equal(s.total, 2);
   assert.doesNotThrow(() => render(s));
 });
+
+test('FLINCH_LOG_DIR overrides the plugin data folder', async () => {
+  const { logDir } = await import('../src/log.mjs');
+  assert.equal(logDir({ FLINCH_LOG_DIR: '/a', CLAUDE_PLUGIN_DATA: '/b' }), '/a');
+  assert.equal(logDir({ CLAUDE_PLUGIN_DATA: '/b' }), '/b');
+});

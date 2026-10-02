@@ -7,7 +7,7 @@ const FILE = 'log.jsonl';
 const PREVIOUS = 'log.1.jsonl';
 
 export function logDir(env = process.env) {
-  return env.CLAUDE_PLUGIN_DATA || join(tmpdir(), 'flinch');
+  return env.FLINCH_LOG_DIR || env.CLAUDE_PLUGIN_DATA || join(tmpdir(), 'flinch');
 }
 
 // One size check per write: past the cap, the current file replaces the

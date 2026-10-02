@@ -4,7 +4,7 @@
 
 Flinch is a [Claude Code](https://code.claude.com) plugin that watches each step your agent takes. It asks a fast classifier a yes-or-no question about the step and nudges the agent when something looks wrong. You don't have to be watching: it catches loops, risky commands, broken project rules, and "done!" claims that were never checked.
 
-> **Status: pre-release.** Flinch is in active development and not yet published. The **rules** and **unproven done** checks work today. The other checks and the `flinch` commands are designed but not built yet, and are marked *coming* below.
+> **Status: pre-release.** Flinch is in active development and not yet published. The **rules**, **unproven done** and **risky command** checks work today. The other checks and the `flinch` commands are designed but not built yet, and are marked *coming* below.
 
 ```
 ● Bash(dotnet test)  ✗ 3 failed
@@ -23,8 +23,8 @@ Flinch is a [Claude Code](https://code.claude.com) plugin that watches each step
 |---|---|---|---|
 | **Your rules** | After each edit | Code that breaks a rule from your own project rules (see [Rules](#rules)) | available |
 | **Unproven done** | When the agent tries to finish | Claiming success with no test or build run since the last edit | available |
+| **Risky command** | Before each shell command | Destructive or outward-facing commands: force-push, `rm -rf`, publishing, deploying | available |
 | **Stuck** | After each tool call | The same failure again and again, editing in circles, flailing | *coming* |
-| **Risky command** | Before each shell command | Destructive or outward-facing commands: force-push, `rm -rf`, publishing, deploying | *coming* |
 | **Drift** | After each tool call | Work that has wandered away from what you asked for | *coming* |
 
 Every check can be turned on or off on its own.
@@ -72,7 +72,9 @@ The agent waits for each check, so a slower backend slows the agent down. `flinc
 ## Modes
 
 - **Nudge (default):** Flinch tells the agent what it noticed, and the agent decides what to do.
-- **Block:** a risky command needs your approval, a rule-breaking edit has to be fixed or explained, and an unproven "done" is sent back.
+- **Block:** a rule-breaking edit has to be fixed or explained, an unproven "done" is sent back, and a risky command is refused.
+
+A risky command always stops before it runs. In nudge mode Claude Code asks you to approve it, with Flinch's reason; in block mode it is refused and the agent is told why.
 
 ```json
 // .flinch.json in your project root (all fields optional)
@@ -83,6 +85,24 @@ The agent waits for each check, so a slower backend slows the agent down. `flinc
   "rules": ".flinch/rules.json"
 }
 ```
+
+## Risky commands
+
+The risky command check runs before every Bash and PowerShell command. It needs no backend: it matches a short list of command shapes, so it takes about 10ms and never calls a model.
+
+| It stops | For example |
+|---|---|
+| Force-pushes | `git push --force`, `git push origin +main` (`--force-with-lease` is allowed) |
+| Throwing away uncommitted changes | `git reset --hard`, `git checkout -- .`, `git clean -fd` |
+| Deleting a branch on the remote | `git push origin --delete feature` |
+| Deleting files outside the project | `rm -rf ~`, `rm -rf ../other`, `Remove-Item -Recurse C:\` (temp folders are fine) |
+| Publishing | `npm publish`, `dotnet nuget push`, `gh release create`, `docker push` |
+| Deploying or deleting cloud resources | `terraform apply`, `kubectl delete`, `az ... delete`, `aws s3 rm` |
+| Dropping tables on a database server | `DROP TABLE` through `psql`, `sqlcmd` or `mysql`, unless the server is local |
+
+Each pattern looks at one command at a time, from its start, so `git commit -m "fix -f flag" && git push` is not a force-push. Over about 19,000 real commands from agent sessions, it stopped 13 (about 1 in 1,500), and each was a hard reset, a remote branch delete, or a cloud resource delete.
+
+Turn it off with `"checks": { "risky": false }` in `.flinch.json`.
 
 ## Rules
 

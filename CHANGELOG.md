@@ -15,4 +15,6 @@ Initial development toward 0.1.0.
 - Every check that reaches a backend is logged locally, quiet ones included, with no file paths, code or rule text. The log rolls over at 5 MB and keeps one older copy.
 - `flinch log` summarizes the log: checks run, flag rate, backend speed, top rules and recent flags.
 - Inside a git worktree with no Flinch files of its own, the main checkout's `.flinch.json` and rules apply, so local-only rules cover every worktree.
+- Risky command check: before every Bash and PowerShell command, stops force-pushes, discarding uncommitted changes, remote branch deletes, deletes outside the project, publishing, deploying and dropping tables on a remote database. Nudge mode asks the user; block mode refuses. Pattern-based, about 10ms, no backend.
+- `FLINCH_LOG_DIR` overrides where the log is written.
 - Fails open on any backend error, timeout, malformed input or bad config.
