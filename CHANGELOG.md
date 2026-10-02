@@ -20,4 +20,6 @@ Initial development toward 0.1.0.
 - A rule nudge also shows the user a one-line notice naming the rule and the file.
 - Checks that stand down are logged: an edit no rule covers, and a finish after tests already ran. Session starts are logged too, and every entry carries a short session id.
 - `flinch log` shows when the last check ran and how many checks stood down. `flinch statusline` prints a one-line summary of the current session for Claude Code's status line, and nothing for sessions without Flinch.
+- Subagents: a subagent that says done without testing its edits is sent back once to test, in both modes; `"subagents": "log"` only logs it. A PowerShell test or build run now counts as testing.
+- Rule patterns are matched from the root of the repository or worktree holding the edited file, so edits in a worktree nested inside the project match the same rules.
 - Fails open on any backend error, timeout, malformed input or bad config.

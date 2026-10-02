@@ -8,7 +8,8 @@ Checked against code.claude.com/docs/en/hooks (2026-10-01). Items marked **verif
 |---|---|---|
 | Risky command | `PreToolUse` (Bash, PowerShell) | `hookSpecificOutput.permissionDecision`: `ask` (nudge mode) or `deny` (block mode), with `permissionDecisionReason` |
 | Rule check | `PostToolUse` (Edit, Write, MultiEdit) | `additionalContext` (nudge mode); block mode is still to be decided |
-| Done without proof | `Stop`, `SubagentStop` | `decision: "block"` plus a reason, so Claude keeps working |
+| Done without proof | `Stop` | Nudge: `systemMessage` for the user. Block: `decision: "block"` plus a reason, so Claude keeps working |
+| Done without proof (subagent) | `SubagentStop`, reading `agent_transcript_path` | `decision: "block"` plus a reason, in both modes (see below) |
 | Drift | `UserPromptSubmit` records the task; `PostToolUse` compares against it | `additionalContext` |
 
 ## Inputs
@@ -41,6 +42,10 @@ Run headless with `claude -p --plugin-dir <repo>` against a scratch project:
 - Stop `decision: "block"` sends the agent back once. The second Stop arrives with `stop_hook_active` set, and Flinch stays quiet, so there is no loop.
 - `${CLAUDE_PLUGIN_ROOT}` resolves, and `CLAUDE_PLUGIN_DATA` is `~/.claude/plugins/data/flinch-inline/` for a `--plugin-dir` load.
 - Latency on the `claude-cli` backend is 3.5 to 4.3 seconds per check, run inline.
+
+- `SubagentStop` input carries `agent_transcript_path` (the subagent's own transcript, every record `isSidechain: true`), `agent_type`, `agent_id`, `last_assistant_message` and `stop_hook_active`.
+- `SubagentStop` output: `systemMessage` and `hookSpecificOutput.additionalContext` are dropped. Neither the user nor the main agent sees them. `decision: "block"` works: the subagent was sent back, ran tests, and the second stop arrived with `stop_hook_active`.
+- PreToolUse and PostToolUse hooks fire for a subagent's own tool calls, in the parent session.
 
 ## Still to verify
 

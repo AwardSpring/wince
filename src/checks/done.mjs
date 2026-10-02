@@ -9,13 +9,15 @@ const DESCRIPTIONS = {
   'not-claiming': 'The message does not claim the work is finished, or it says what still needs checking.',
 };
 
-export async function checkDone({ input, records, threshold, backend, timeoutMs }) {
+export async function checkDone({ input, records, threshold, backend, timeoutMs, subagent = false }) {
   if (input.stop_hook_active) return null;
-  const calls = toolCalls(currentTurn(records));
+  const scope = { sidechain: subagent };
+  const who = subagent ? { agent: String(input.agent_type ?? 'subagent').slice(0, 40) } : {};
+  const calls = toolCalls(currentTurn(records, scope), scope);
   if (!calls.some((c) => EDIT_TOOLS.has(c.name))) return null;
-  if (!unverifiedEdits(calls)) return { trace: { check: 'done', outcome: 'skipped', reason: 'verified' } };
+  if (!unverifiedEdits(calls)) return { trace: { check: 'done', ...who, outcome: 'skipped', reason: 'verified' } };
 
-  const message = String(input.last_assistant_message ?? lastAssistantText(records)).slice(-2000);
+  const message = String(input.last_assistant_message ?? lastAssistantText(records, subagent)).slice(-2000);
   if (!message.trim()) return null;
 
   const question = `A coding agent changed files and has not run any test, build or check since its last edit. This is its final message to the user:
@@ -26,8 +28,8 @@ ${message}
 
 Does the message claim the work is finished, fixed or working?`;
   const verdict = await backend.classify(question, CHOICES, { timeoutMs, descriptions: DESCRIPTIONS });
-  if (!validVerdict(verdict, CHOICES)) return { trace: { check: 'done', outcome: 'unusable' } };
-  const trace = { check: 'done', choice: verdict.choice, confidence: verdict.confidence };
+  if (!validVerdict(verdict, CHOICES)) return { trace: { check: 'done', ...who, outcome: 'unusable' } };
+  const trace = { check: 'done', ...who, choice: verdict.choice, confidence: verdict.confidence };
   if (verdict.choice !== CLAIMS || verdict.confidence < threshold) return { trace: { ...trace, outcome: 'quiet' } };
 
   return {
@@ -35,15 +37,17 @@ Does the message claim the work is finished, fixed or working?`;
     finding: {
       check: 'done',
       id: 'unproven-done',
-      message: 'Flinch: you said the work is done, but nothing has been tested or built since your last edit. Run the relevant tests or build, then report what they showed.',
+      message: subagent
+        ? 'Flinch: you said your work is done, but you have not run any test, build or check since your last edit. Run the relevant tests or build now, then report what they showed.'
+        : 'Flinch: you said the work is done, but nothing has been tested or built since your last edit. Run the relevant tests or build, then report what they showed.',
     },
   };
 }
 
-function lastAssistantText(records) {
+function lastAssistantText(records, sidechain = false) {
   for (let i = records.length - 1; i >= 0; i--) {
     const r = records[i];
-    if (r.type !== 'assistant' || r.isSidechain) continue;
+    if (r.type !== 'assistant' || Boolean(r.isSidechain) !== sidechain) continue;
     const text = (r.message?.content ?? []).filter((b) => b?.type === 'text').map((b) => b.text).join('\n');
     if (text.trim()) return text;
   }

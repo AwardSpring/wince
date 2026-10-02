@@ -20,18 +20,20 @@ export async function readTranscript(path) {
   }
 }
 
-export function currentTurn(records) {
+// A subagent's own transcript marks every record as a sidechain, so its
+// checks read sidechain records and the main agent's checks skip them.
+export function currentTurn(records, { sidechain = false } = {}) {
   let start = 0;
   records.forEach((r, i) => {
-    if (isHumanPrompt(r)) start = i;
+    if (isHumanPrompt(r, sidechain)) start = i;
   });
   return records.slice(start);
 }
 
-export function toolCalls(records) {
+export function toolCalls(records, { sidechain = false } = {}) {
   const calls = [];
   for (const r of records) {
-    if (r.type !== 'assistant' || r.isSidechain) continue;
+    if (r.type !== 'assistant' || Boolean(r.isSidechain) !== sidechain) continue;
     for (const block of r.message?.content ?? []) {
       if (block?.type === 'tool_use') calls.push({ name: block.name, input: block.input ?? {} });
     }
@@ -45,12 +47,14 @@ export function unverifiedEdits(calls) {
   return !calls.slice(lastEdit + 1).some(isVerification);
 }
 
+const SHELLS = new Set(['Bash', 'PowerShell']);
+
 export function isVerification(call) {
-  return call.name === 'Bash' && VERIFY.test(String(call.input.command ?? ''));
+  return SHELLS.has(call.name) && VERIFY.test(String(call.input.command ?? ''));
 }
 
-function isHumanPrompt(r) {
-  if (r.type !== 'user' || r.isSidechain || r.isMeta || r.isCompactSummary) return false;
+function isHumanPrompt(r, sidechain = false) {
+  if (r.type !== 'user' || Boolean(r.isSidechain) !== sidechain || r.isMeta || r.isCompactSummary) return false;
   const content = r.message?.content;
   if (typeof content === 'string') return true;
   return Array.isArray(content) && content.length > 0 && content.every((b) => b?.type === 'text');

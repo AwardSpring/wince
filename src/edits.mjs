@@ -1,4 +1,5 @@
-import { relative, isAbsolute } from 'node:path';
+import { relative, isAbsolute, dirname, join } from 'node:path';
+import { existsSync } from 'node:fs';
 
 export const EDIT_TOOLS = new Set(['Edit', 'Write', 'MultiEdit']);
 
@@ -9,10 +10,26 @@ export function editToDiff(toolName, toolInput) {
   return '';
 }
 
+// Rule patterns are written from a repository's root. An edit can land in a
+// git worktree nested inside the project (or elsewhere), so the path is
+// taken from the nearest folder above the file that holds a .git entry,
+// falling back to the project folder.
 export function projectPath(filePath, projectDir) {
   if (!filePath) return '';
-  const rel = projectDir && isAbsolute(filePath) ? relative(projectDir, filePath) : filePath;
-  return rel.replaceAll('\\', '/');
+  if (!isAbsolute(filePath)) return filePath.replaceAll('\\', '/');
+  const root = repoRoot(filePath) ?? projectDir;
+  return (root ? relative(root, filePath) : filePath).replaceAll('\\', '/');
+}
+
+export function repoRoot(filePath) {
+  let dir = dirname(filePath);
+  for (let i = 0; i < 64; i++) {
+    if (existsSync(join(dir, '.git'))) return dir;
+    const parent = dirname(dir);
+    if (parent === dir) return null;
+    dir = parent;
+  }
+  return null;
 }
 
 export function capDiff(diff, maxChangedLines = 80) {

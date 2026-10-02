@@ -66,3 +66,18 @@ test('the hook checks edits in a worktree against the main checkout rules, from 
   assert.equal(res.status, 0);
   assert.match(JSON.parse(res.stdout).hookSpecificOutput.additionalContext, /no-any/);
 });
+
+test('an edit in a worktree nested inside the main checkout matches rules from that worktree root', () => {
+  const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'flinch-nest-')));
+  git(root, 'init', '-q');
+  git(root, '-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'init');
+  const nested = join(root, '.worktrees', 'feature');
+  git(root, 'worktree', 'add', '-q', '--detach', nested);
+  rulesFile(root, 'no-any');
+  const res = spawnSync(process.execPath, [HOOK, 'post-tool-use'], {
+    input: JSON.stringify({ cwd: root, tool_name: 'Edit', tool_input: { file_path: join(nested, 'src', 'a.ts'), old_string: 'x', new_string: 'let y: any;' } }),
+    env: { ...process.env, FLINCH_INNER: '', FLINCH_BACKEND: 'fake', FLINCH_FAKE: 'no-any', CLAUDE_PROJECT_DIR: root, CLAUDE_PLUGIN_DATA: join(root, '.data') },
+    encoding: 'utf8',
+  });
+  assert.match(JSON.parse(res.stdout).hookSpecificOutput.additionalContext, /src\/a\.ts may break "no-any"/);
+});

@@ -245,3 +245,43 @@ test('stand-downs and session starts are logged with a short session id', () => 
   assert.ok(lines.every((e) => e.session === 'abcdef12'));
   assert.ok(lines.every((e) => !('backend' in e)), 'stand-downs never called a backend');
 });
+
+const side = (r) => ({ ...r, isSidechain: true });
+
+test('a subagent that edits and says done without testing is sent back, in nudge mode too', () => {
+  const dir = project();
+  const path = transcript(dir, [side(prompt), side(toolUse('Edit', { file_path: 'a.ts' })), side(said('Done, all fixed.'))]);
+  const out = runHook('subagent-stop', { agent_transcript_path: path, agent_type: 'general-purpose', last_assistant_message: 'Done, all fixed.' }, { dir, env: { FLINCH_FAKE: 'claims-done' } });
+  const json = JSON.parse(out.stdout);
+  assert.equal(json.decision, 'block');
+  assert.match(json.reason, /Run the relevant tests or build now/);
+  assert.equal(logLines(dir).at(-1).agent, 'general-purpose');
+});
+
+test('"subagents": "log" only logs the finding', () => {
+  const dir = project({ config: { subagents: 'log' } });
+  const path = transcript(dir, [side(prompt), side(toolUse('Edit', {})), side(said('Done.'))]);
+  assert.equal(runHook('subagent-stop', { agent_transcript_path: path }, { dir, env: { FLINCH_FAKE: 'claims-done' } }).stdout, '');
+  assert.equal(logLines(dir).at(-1).outcome, 'flagged');
+});
+
+test('block mode sends the subagent back', () => {
+  const dir = project({ config: { mode: 'block' } });
+  const path = transcript(dir, [side(prompt), side(toolUse('Write', { file_path: 'a.ts' })), side(said('Done.'))]);
+  assert.equal(JSON.parse(runHook('subagent-stop', { agent_transcript_path: path }, { dir, env: { FLINCH_FAKE: 'claims-done' } }).stdout).decision, 'block');
+});
+
+test('a subagent that tested through PowerShell stands down', () => {
+  const dir = project();
+  const path = transcript(dir, [side(prompt), side(toolUse('Edit', {})), side(toolUse('PowerShell', { command: 'dotnet test Awardspring.Tests' })), side(said('Done.'))]);
+  assert.equal(runHook('subagent-stop', { agent_transcript_path: path }, { dir, env: { FLINCH_FAKE: 'claims-done' } }).stdout, '');
+  assert.equal(logLines(dir).at(-1).reason, 'verified');
+});
+
+test('the main agent check ignores subagent records, and the subagent check ignores the main agent', () => {
+  const dir = project();
+  const mainOnly = transcript(dir, [prompt, side(toolUse('Edit', {})), said('Done.')]);
+  assert.equal(runHook('stop', { transcript_path: mainOnly }, { dir, env: { FLINCH_FAKE: 'claims-done' } }).stdout, '');
+  const subOnly = transcript(dir, [prompt, toolUse('Edit', {}), said('Done.')]);
+  assert.equal(runHook('subagent-stop', { agent_transcript_path: subOnly }, { dir, env: { FLINCH_FAKE: 'claims-done' } }).stdout, '');
+});

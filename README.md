@@ -37,7 +37,7 @@ Flinch is quiet when nothing is wrong. When it speaks, you always see it:
 | Check | When it fires, you see |
 |---|---|
 | Your rules | A one-line notice, for example `Flinch flagged "tenant-filter" in OrderQueries.cs`. The agent gets the full rule. |
-| Unproven done | A line under the agent's last message (nudge mode), or the agent keeps working (block mode). |
+| Unproven done | A line under the agent's last message (nudge mode), or the agent keeps working (block mode). A subagent that says done without testing is sent back to test before it reports (see below). |
 | Risky command | Claude Code's permission prompt, with Flinch's reason (nudge mode). |
 
 To see that Flinch is running even when it has nothing to say, add it to Claude Code's status line. It shows a segment like `flinch 12 checks · 1 flag · last 3:08pm` for the current session, and nothing in sessions where Flinch isn't loaded:
@@ -49,6 +49,12 @@ flinch=$(echo "$input" | flinch statusline 2>/dev/null)
 ```
 
 `flinch statusline` reads the same JSON Claude Code gives your status line command. If `flinch` isn't on the path where your status line runs, call `node <plugin folder>/src/cli.mjs statusline` instead.
+
+## Subagents
+
+Agents a session launches, such as research or build agents, go through the same checks. Their edits get the rules check and their shell commands get the risky command check.
+
+When a subagent says it's done without having tested its edits, Flinch sends it back once to run the tests before it reports to the main agent. This happens in nudge mode too: it never interrupts you, and Claude Code doesn't pass a gentler note from a finishing subagent to anyone. To only log it instead, set `"subagents": "log"` in `.flinch.json`.
 
 ## How well it works
 
@@ -103,6 +109,7 @@ A risky command always stops before it runs. In nudge mode Claude Code asks you 
   "mode": "nudge",
   "checks": { "rules": true, "done": true, "risky": true },
   "threshold": 0.6,
+  "subagents": "send-back",
   "rules": ".flinch/rules.json"
 }
 ```
@@ -146,7 +153,7 @@ The rules check works from your project's own rules. Write them in `.flinch/rule
 
 **Getting started.** Copy a starter set from [`examples/`](examples/) and edit it, or (*coming*) run `flinch rules init` to draft the file from your `CLAUDE.md` / `AGENTS.md`. Then trim it. Ten sharp rules beat forty vague ones.
 
-**Commit it.** `.flinch/rules.json` belongs in your repository, so everyone on the team, and every agent, is held to the same rules. If you keep it local instead, Flinch still finds it from any git worktree of the same repository.
+**Commit it.** `.flinch/rules.json` belongs in your repository, so everyone on the team, and every agent, is held to the same rules. If you keep it local instead, Flinch still finds it from any git worktree of the same repository. Patterns are matched from the root of the repository or worktree that holds the edited file, so they work the same inside a worktree.
 
 ### Writing rules that work
 
