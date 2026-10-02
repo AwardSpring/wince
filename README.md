@@ -4,7 +4,7 @@
 
 Flinch is a [Claude Code](https://code.claude.com) plugin that watches each step your agent takes. It asks a fast classifier a yes-or-no question about the step and nudges the agent when something looks wrong. You don't have to be watching: it catches loops, risky commands, broken project rules, and "done!" claims that were never checked.
 
-> **Status: pre-release.** Flinch is in active development and not yet published. The commands below describe v0.1 as designed.
+> **Status: pre-release.** Flinch is in active development and not yet published. The **rules** and **unproven done** checks work today. The other checks and the `flinch` commands are designed but not built yet, and are marked *coming* below.
 
 ```
 ● Bash(dotnet test)  ✗ 3 failed
@@ -19,15 +19,34 @@ Flinch is a [Claude Code](https://code.claude.com) plugin that watches each step
 
 ## What it checks
 
-| Check | When | What it catches |
-|---|---|---|
-| **Stuck** | After each tool call | The same failure again and again, editing in circles, flailing |
-| **Risky command** | Before each shell command | Destructive or outward-facing commands: force-push, `rm -rf`, publishing, deploying |
-| **Unproven done** | When the agent tries to finish | Claiming success with no test or build run since the last edit |
-| **Your rules** | After each edit | Code that breaks a rule from your own project rules (see [Rules](#rules)) |
-| **Drift** | After each tool call | Work that has wandered away from what you asked for |
+| Check | When | What it catches | |
+|---|---|---|---|
+| **Your rules** | After each edit | Code that breaks a rule from your own project rules (see [Rules](#rules)) | available |
+| **Unproven done** | When the agent tries to finish | Claiming success with no test or build run since the last edit | available |
+| **Stuck** | After each tool call | The same failure again and again, editing in circles, flailing | *coming* |
+| **Risky command** | Before each shell command | Destructive or outward-facing commands: force-push, `rm -rf`, publishing, deploying | *coming* |
+| **Drift** | After each tool call | Work that has wandered away from what you asked for | *coming* |
 
 Every check can be turned on or off on its own.
+
+## How well it works
+
+We measured the rules check on real edits from a production codebase's review history. Each case is an edit a human reviewer flagged as breaking a team rule, or a clean edit from the same codebase, many of them near misses. We tuned on one set of cases, then confirmed on a second set of 50 that shared no pull request, commit, or diff with the first.
+
+On the held-out set, averaged over three runs:
+
+| Backend | Rule violations caught | Wrong rule named | False alarms on clean edits | No answer | Time per check |
+|---|---|---|---|---|---|
+| **Jev** | **19 of 25** | 0 | **0 of 25** | 0 | about 150ms |
+| Claude Haiku | 17 to 19 of 25 | 0 to 1 | 2 to 6 of 25 | 3 to 5 | about 6.5s |
+
+Ranges are the spread across the three runs.
+
+- **Jev stays quiet when it should.** It never raised a false alarm, and it gave the same answers on every run. Its confidence is a real probability, so the threshold works as intended.
+- **Claude catches about as many, but it's noisy.** Identical runs raised between 2 and 6 false alarms. Its confidence is 0.85 to 0.95 whether it's right or wrong, so the threshold can't filter it. A few checks per run also gave no usable answer; those fail open.
+- **In a live Claude Code session**, a Jev check takes about 300ms from start to finish. On the Claude Code fallback it takes about 4 seconds.
+
+These numbers come from one codebase and one team's rules. Yours will depend on how concrete your rules are (see [Writing rules that work](#writing-rules-that-work)), so test them on your own history before you rely on block mode.
 
 ## Install
 
@@ -45,10 +64,10 @@ That's it. Flinch works right away using your existing Claude Code login (see [B
 Each check is one small multiple-choice question. Flinch sends it to the fastest backend you have:
 
 1. **[Jev](https://typesafe.ai/)** (recommended). Paste a key when the plugin asks, or set `TYPESAFE_API_KEY`. A check takes about 150ms, so it finishes before the agent's next step.
-2. **Anthropic API.** Used when `ANTHROPIC_API_KEY` is set. It's slower, so most checks run in the background and speak up only when they find something.
-3. **Claude Code itself.** Always available, with no key needed. It uses your existing login and counts against your Claude plan's limits.
+2. **Anthropic API.** Used when `ANTHROPIC_API_KEY` is set. Each check takes a second or more.
+3. **Claude Code itself.** Always available, with no key needed. It uses your existing login, takes about 4 seconds per check, and counts against your Claude plan's limits.
 
-`flinch status` shows which backend is active.
+The agent waits for each check, so a slower backend slows the agent down. `flinch status` (*coming*) will show which backend is active.
 
 ## Modes
 
@@ -84,7 +103,7 @@ The rules check works from your project's own rules. Write them in `.flinch/rule
 | `applies` | File patterns the rule covers. Only rules matching the edited file are sent with a check, so narrow patterns keep checks fast and accurate |
 | `rule` | One sentence the agent's edit is judged against |
 
-**Getting started.** Run `flinch rules init` to draft the file from your `CLAUDE.md` / `AGENTS.md`, or copy a starter set from [`examples/`](examples/) and edit it. Then trim it. Ten sharp rules beat forty vague ones.
+**Getting started.** Copy a starter set from [`examples/`](examples/) and edit it, or (*coming*) run `flinch rules init` to draft the file from your `CLAUDE.md` / `AGENTS.md`. Then trim it. Ten sharp rules beat forty vague ones.
 
 **Commit it.** `.flinch/rules.json` belongs in your repository, so everyone on the team, and every agent, is held to the same rules.
 
@@ -109,15 +128,19 @@ Before you turn on block mode, check your rules against real edits from your own
 flinch eval --rules .flinch/rules.json --cases .flinch/cases.jsonl
 ```
 
+Until the `flinch` command ships, run the same thing from a clone of this repository: `npm run eval -- --rules <your rules> --cases <your cases> --backend jev`.
+
 Each line of `cases.jsonl` is one real edit, labeled with the rule it breaks or `"none"`:
 
 ```json
 {"id": "c01", "expected": "tenant-filter", "file_path": "src/Orders/OrderQueries.cs", "diff": "@@ ... @@\n+ var orders = db.Orders.Where(o => o.Status == status);"}
 ```
 
-Include clean edits, especially near misses, as well as rule-breaking ones. `flinch eval` reports catches, misses, wrong-rule answers, and false alarms. A rule that raises false alarms should be rewritten to be more concrete, or removed.
+Include clean edits, especially near misses, as well as rule-breaking ones. The eval reports catches, misses, wrong-rule answers, and false alarms, and shows how each would change at every threshold from 0.4 to 0.9. A rule that raises false alarms should be rewritten to be more concrete, or removed.
 
 ## Commands
+
+All *coming*:
 
 | Command | What it does |
 |---|---|
@@ -128,7 +151,9 @@ Include clean edits, especially near misses, as well as rule-breaking ones. `fli
 
 ## Privacy
 
-Flinch sends each check the smallest amount of context it can: the edited hunk, the command about to run, or a short summary of recent steps, plus the rules that apply. It never sends whole files or your full conversation. Requests go only to the backend you're using. With the Claude Code backend, nothing leaves your machine except through Claude Code itself. Flinch has no telemetry.
+Flinch sends each check the smallest amount of context it can: the edited hunk, the command about to run, or a short summary of recent steps, plus the rules that apply. It never sends whole files or your full conversation. Requests go only to the backend you're using. With the Claude Code backend, nothing leaves your machine except through Claude Code itself.
+
+Flinch has no telemetry. It keeps a log of what it flagged in Claude Code's plugin data folder on your machine (`~/.claude/plugins/data/`), and that log is never sent anywhere.
 
 ## Failing safe
 
