@@ -11,8 +11,8 @@ export async function checkRules({ input, rules, threshold, backend, timeoutMs }
   if (applicable.length === 0) return null;
 
   const diff = capDiff(editToDiff(input.tool_name, input.tool_input ?? {}));
-  const { question, choices } = ruleCheck({ rules: applicable, filePath, diff });
-  const verdict = await backend.classify(question, choices, { timeoutMs });
+  const { question, choices, descriptions } = ruleCheck({ rules: applicable, filePath, diff });
+  const verdict = await backend.classify(question, choices, { timeoutMs, descriptions });
   if (!validVerdict(verdict, choices)) return null;
 
   const said = decide(verdict, threshold);

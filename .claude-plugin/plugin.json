@@ -3,9 +3,25 @@
   "name": "flinch",
   "version": "0.1.0",
   "description": "Your coding agent flinches before the mistake. Catches rule-breaking edits and unproven done claims.",
-  "author": { "name": "AwardSpring" },
+  "author": {
+    "name": "AwardSpring"
+  },
   "homepage": "https://github.com/AwardSpring/flinch",
   "repository": "https://github.com/AwardSpring/flinch",
   "license": "MIT",
-  "keywords": ["hooks", "guardrails", "code-review", "rules"]
+  "keywords": [
+    "hooks",
+    "guardrails",
+    "code-review",
+    "rules"
+  ],
+  "userConfig": {
+    "jev_api_key": {
+      "type": "string",
+      "title": "Jev API key (optional)",
+      "description": "Key from typesafe.ai. With it, checks run in about 150ms. Without it, Flinch uses ANTHROPIC_API_KEY or your Claude Code login.",
+      "required": false,
+      "sensitive": true
+    }
+  }
 }

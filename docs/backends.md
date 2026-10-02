@@ -33,7 +33,7 @@ Adapters call each provider's HTTP API with `fetch`, with no provider SDKs, so i
 - **Stop always runs inline.** It fires once per turn.
 - **Usage-based backends cost the user money, and tier 6 uses their plan limits.** `flinch init` and the README say so. Individual checks can be switched off.
 - **Each backend carries its own timeout.** A timeout or error fails open.
-- **Scoring is the same everywhere:** one choice id plus a confidence from 0 to 1, with the same 0.8 threshold. Switching backends doesn't change how often Flinch speaks.
+- **Scoring is the same everywhere:** one choice id plus a confidence from 0 to 1, with the same threshold (0.6 by default). The default was set on Jev's probabilities, which are calibrated. Claude backends report their own confidence, which runs high (0.85 to 0.95 whether right or wrong), so the threshold filters little for them.
 - `flinch status` shows the active backend. `flinch log` records which backend gave each verdict.
 
 ## Host agents (separate question)

@@ -4,7 +4,7 @@ import { join } from 'node:path';
 export const DEFAULTS = Object.freeze({
   mode: 'nudge',
   checks: { rules: true, done: true },
-  threshold: 0.8,
+  threshold: 0.6,
   rules: '.flinch/rules.json',
 });
 

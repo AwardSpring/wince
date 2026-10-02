@@ -3,6 +3,10 @@ import { validVerdict } from '../verdict.mjs';
 
 const CLAIMS = 'claims-done';
 const CHOICES = [CLAIMS, 'not-claiming'];
+const DESCRIPTIONS = {
+  [CLAIMS]: 'The message says the work is finished, fixed or working.',
+  'not-claiming': 'The message does not claim the work is finished, or it says what still needs checking.',
+};
 
 export async function checkDone({ input, records, threshold, backend, timeoutMs }) {
   if (input.stop_hook_active) return null;
@@ -18,7 +22,7 @@ ${message}
 """
 
 Does the message claim the work is finished, fixed or working?`;
-  const verdict = await backend.classify(question, CHOICES, { timeoutMs });
+  const verdict = await backend.classify(question, CHOICES, { timeoutMs, descriptions: DESCRIPTIONS });
   if (!validVerdict(verdict, CHOICES)) return null;
   if (verdict.choice !== CLAIMS || verdict.confidence < threshold) return null;
 

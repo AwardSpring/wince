@@ -44,7 +44,7 @@ That's it. Flinch works right away using your existing Claude Code login (see [B
 
 Each check is one small multiple-choice question. Flinch sends it to the fastest backend you have:
 
-1. **[Jev](https://typesafe.ai/)** (recommended). Paste a key when the plugin asks, or set `JEV_API_KEY`. Verdicts come back in about 100ms, so every check runs before the agent's next step.
+1. **[Jev](https://typesafe.ai/)** (recommended). Paste a key when the plugin asks, or set `TYPESAFE_API_KEY`. A check takes about 150ms, so it finishes before the agent's next step.
 2. **Anthropic API.** Used when `ANTHROPIC_API_KEY` is set. It's slower, so most checks run in the background and speak up only when they find something.
 3. **Claude Code itself.** Always available, with no key needed. It uses your existing login and counts against your Claude plan's limits.
 
@@ -60,7 +60,7 @@ Each check is one small multiple-choice question. Flinch sends it to the fastest
 {
   "mode": "nudge",
   "checks": { "stuck": true, "risky": true, "done": true, "rules": true, "drift": false },
-  "threshold": 0.8,
+  "threshold": 0.6,
   "rules": ".flinch/rules.json"
 }
 ```

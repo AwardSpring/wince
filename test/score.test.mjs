@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { decide, score, percentile } from '../src/score.mjs';
+import { decide, score, percentile, sweep } from '../src/score.mjs';
 
 test('decide stays quiet below the threshold and on none', () => {
   assert.equal(decide({ choice: 'no-any', confidence: 0.79 }, 0.8), 'none');
@@ -30,4 +30,17 @@ test('percentile handles empty and small lists', () => {
   assert.equal(percentile([], 0.5), 0);
   assert.equal(percentile([5], 0.95), 5);
   assert.equal(percentile([1, 2, 3, 4], 0.5), 3);
+});
+
+test('sweep rescores the raw answers at each threshold', () => {
+  const rows = [
+    { id: 'a', expected: 'no-any', accepted: ['no-any'], raw: 'no-any', confidence: 0.65 },
+    { id: 'b', expected: 'none', accepted: ['none'], raw: 'no-any', confidence: 0.45 },
+    { id: 'c', expected: 'no-any', accepted: ['no-any'], raw: null, confidence: null },
+  ];
+  assert.deepEqual(sweep(rows, [0.4, 0.6, 0.8]), [
+    { threshold: 0.4, caught: 1, wrongRule: 0, falseAlarms: 1 },
+    { threshold: 0.6, caught: 1, wrongRule: 0, falseAlarms: 0 },
+    { threshold: 0.8, caught: 0, wrongRule: 0, falseAlarms: 0 },
+  ]);
 });

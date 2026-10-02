@@ -32,7 +32,7 @@ If no rule is clearly violated, or you would need code outside this edit to be s
 
 ## Decision
 
-- If `none` wins, or the top choice's confidence is below the threshold (0.8 by default), stay silent.
+- If `none` wins, or the top choice's confidence is below the threshold (0.6 by default), stay silent.
 - Otherwise, in nudge mode: `PostToolUse` returns the message `Flinch: this edit may break "{{id}}": {{rule}}` as context Claude sees.
 - In block mode the same message is returned as a block, and Claude has to fix the edit or explain it.
 - If the call errors or times out, stay silent. Flinch fails open.
