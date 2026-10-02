@@ -2,6 +2,10 @@ export const name = 'jev';
 
 const ENDPOINT = 'https://api.typesafe.ai/v1/systemone';
 
+export function endpoint(env = process.env) {
+  return env.FLINCH_JEV_URL || ENDPOINT;
+}
+
 export function apiKey(env = process.env) {
   return env.CLAUDE_PLUGIN_OPTION_JEV_API_KEY || env.TYPESAFE_API_KEY || env.JEV_API_KEY || '';
 }
@@ -34,7 +38,7 @@ export function readAnswer(body, choices) {
 }
 
 export async function classify(question, choices, { timeoutMs = 1500, env = process.env, ...opts } = {}) {
-  const res = await fetch(ENDPOINT, {
+  const res = await fetch(endpoint(env), {
     method: 'POST',
     signal: AbortSignal.timeout(timeoutMs),
     headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey(env)}` },

@@ -14,4 +14,5 @@ Initial development toward 0.1.0.
 - Default confidence threshold is 0.6, confirmed on a held-out case set: no false alarms, and more catches than 0.8.
 - Every check that reaches a backend is logged locally, quiet ones included, with no file paths, code or rule text. The log rolls over at 5 MB and keeps one older copy.
 - `flinch log` summarizes the log: checks run, flag rate, backend speed, top rules and recent flags.
+- Inside a git worktree with no Flinch files of its own, the main checkout's `.flinch.json` and rules apply, so local-only rules cover every worktree.
 - Fails open on any backend error, timeout, malformed input or bad config.
