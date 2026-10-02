@@ -1,6 +1,6 @@
-# Flinch
-
-**Your coding agent flinches before the mistake.**
+<p align="center">
+  <img src="docs/assets/flinch.png" alt="Flinch: your coding agent flinches before the mistake." width="360">
+</p>
 
 Flinch is a [Claude Code](https://code.claude.com) plugin that watches each step your agent takes. It asks a fast classifier a yes-or-no question about the step and nudges the agent when something looks wrong. You don't have to be watching: it catches loops, risky commands, broken project rules, and "done!" claims that were never checked.
 
