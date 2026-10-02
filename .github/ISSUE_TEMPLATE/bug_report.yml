@@ -21,15 +21,10 @@ body:
     validations:
       required: true
   - type: textarea
-    id: status
-    attributes:
-      label: "`flinch status` output"
-      render: text
-  - type: textarea
     id: log
     attributes:
-      label: Relevant `flinch log` lines
-      description: Remove anything private first.
+      label: "`flinch log` output"
+      description: It holds no code or file paths, but check before pasting.
       render: text
   - type: input
     id: versions

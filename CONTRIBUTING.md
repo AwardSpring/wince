@@ -4,7 +4,7 @@ Thanks for helping. Bug reports, new checks, better prompts, and eval cases are 
 
 ## Before you start
 
-- **Bugs:** open an issue with the bug report template. Include `flinch status` output and the relevant `flinch log` lines. Trim anything private first.
+- **Bugs:** open an issue with the bug report template. Include `flinch log` output and your Flinch, Claude Code and OS versions.
 - **New checks or behavior changes:** open an issue to discuss before writing code. Every check costs latency and attention, so new checks must earn their place.
 - **Security issues:** don't open a public issue. See [SECURITY.md](SECURITY.md).
 
@@ -25,7 +25,7 @@ To try your local copy in Claude Code without installing it:
 claude --plugin-dir ./path/to/flinch
 ```
 
-Then check `~/.claude/plugins/data/flinch-inline/log.jsonl` to see what each check decided.
+Then run `flinch log` inside the session, or `node src/cli.mjs log` from the repo, to see what each check decided.
 
 Set `FLINCH_DEBUG=1` to log every check, its input size, the backend, latency, and the verdict to stderr.
 

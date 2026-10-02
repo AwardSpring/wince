@@ -23,13 +23,17 @@ ${message}
 
 Does the message claim the work is finished, fixed or working?`;
   const verdict = await backend.classify(question, CHOICES, { timeoutMs, descriptions: DESCRIPTIONS });
-  if (!validVerdict(verdict, CHOICES)) return null;
-  if (verdict.choice !== CLAIMS || verdict.confidence < threshold) return null;
+  if (!validVerdict(verdict, CHOICES)) return { trace: { check: 'done', outcome: 'unusable' } };
+  const trace = { check: 'done', choice: verdict.choice, confidence: verdict.confidence };
+  if (verdict.choice !== CLAIMS || verdict.confidence < threshold) return { trace: { ...trace, outcome: 'quiet' } };
 
   return {
-    check: 'done',
-    id: 'unproven-done',
-    message: 'Flinch: you said the work is done, but nothing has been tested or built since your last edit. Run the relevant tests or build, then report what they showed.',
+    trace: { ...trace, outcome: 'flagged' },
+    finding: {
+      check: 'done',
+      id: 'unproven-done',
+      message: 'Flinch: you said the work is done, but nothing has been tested or built since your last edit. Run the relevant tests or build, then report what they showed.',
+    },
   };
 }
 
