@@ -22,3 +22,14 @@ export function percentile(sorted, p) {
   if (!sorted.length) return 0;
   return sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))];
 }
+
+export function sweep(results, thresholds) {
+  return thresholds.map((t) => {
+    const rescored = results.map((r) => ({
+      ...r,
+      said: r.raw && r.confidence != null ? decide({ choice: r.raw, confidence: r.confidence }, t) : NONE,
+    }));
+    const s = score(rescored);
+    return { threshold: t, caught: s.caught.length, wrongRule: s.wrongRule.length, falseAlarms: s.falseAlarms.length };
+  });
+}

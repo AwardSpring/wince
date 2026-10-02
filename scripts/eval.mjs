@@ -2,7 +2,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 import { loadRules, rulesFor } from '../src/rules.mjs';
 import { ruleCheck, NONE } from '../src/prompt.mjs';
-import { decide, score, percentile } from '../src/score.mjs';
+import { decide, score, percentile, sweep } from '../src/score.mjs';
 
 const { values: opts } = parseArgs({
   options: {
@@ -79,6 +79,7 @@ const summary = {
   clean: { total: clean.length, falseAlarms: falseAlarms.length },
   errors: errors.length,
   latencyMs: { p50: pct(0.5), p95: pct(0.95), max: times.at(-1) ?? 0 },
+  sweep: sweep(results, [0.4, 0.5, 0.6, 0.7, 0.8, 0.9]),
 };
 
 await mkdir('private/results', { recursive: true });
@@ -86,7 +87,11 @@ const stamp = new Date().toISOString().replace(/[:.]/g, '-');
 const out = `private/results/${opts.backend}-${stamp}.json`;
 await writeFile(out, JSON.stringify({ summary, results }, null, 2));
 
-console.log(JSON.stringify(summary, null, 2));
+const { sweep: table, ...headline } = summary;
+console.log(JSON.stringify(headline, null, 2));
+console.log(`
+Threshold  caught/${violations.length}  wrong rule  false alarms/${clean.length}`);
+for (const row of table) console.log(`  ${row.threshold.toFixed(1)}       ${String(row.caught).padStart(3)}         ${String(row.wrongRule).padStart(3)}         ${String(row.falseAlarms).padStart(3)}`);
 const show = (label, rows) => rows.length && console.log(`\n${label}:\n` + rows.map((r) => `  ${r.id} expected=${r.expected} said=${r.said} raw=${r.raw} conf=${r.confidence}${r.error ? ' error=' + r.error : ''}`).join('\n'));
 show('Wrong rule', wrongRule);
 show('Missed', missed);
