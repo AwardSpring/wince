@@ -13,11 +13,14 @@ const HARD_DEADLINE_MS = 25_000;
 // Every path out of this file exits 0. A Flinch failure must never block
 // or slow the agent beyond the deadline, so errors are logged and dropped.
 // Returns { output, trace }: output goes to Claude Code, trace to the log.
-// A check that never reached a backend returns null and is not logged.
+// Null means the check didn't apply here at all (no rules file, no edits
+// this turn, a safe command) and nothing is logged.
 export async function run(event, input, env = process.env) {
   if (env.FLINCH_INNER) return null;
   const projectDir = env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd();
   const config = await loadConfig(projectDir);
+
+  if (event === 'session-start') return { output: null, trace: { check: 'session', outcome: 'started' } };
 
   if (event === 'pre-tool-use') {
     if (!config.checks.risky) return null;
@@ -46,7 +49,7 @@ export async function run(event, input, env = process.env) {
 
   return {
     output: result.finding ? toOutput(result.finding, config.mode) : null,
-    trace: { backend: backend.name, mode: config.mode, ...result.trace, id: result.finding?.id },
+    trace: { ...(result.trace.outcome === 'skipped' ? {} : { backend: backend.name }), mode: config.mode, ...result.trace, id: result.finding?.id },
   };
 }
 
@@ -62,14 +65,21 @@ export function preToolUseOutput(finding, mode) {
   };
 }
 
+// The agent gets the full message; the user gets a one-line notice so a
+// nudge is never invisible to them.
 export function postToolUseOutput(finding, mode) {
-  if (mode === 'block') return { decision: 'block', reason: finding.message };
-  return { hookSpecificOutput: { hookEventName: 'PostToolUse', additionalContext: finding.message } };
+  const notice = finding.notice ? { systemMessage: finding.notice } : {};
+  if (mode === 'block') return { decision: 'block', reason: finding.message, ...notice };
+  return { hookSpecificOutput: { hookEventName: 'PostToolUse', additionalContext: finding.message }, ...notice };
 }
 
 export function stopOutput(finding, mode) {
   if (mode === 'block') return { decision: 'block', reason: finding.message };
   return { systemMessage: finding.message };
+}
+
+export function shortSession(id) {
+  return typeof id === 'string' && id ? id.slice(0, 8) : undefined;
 }
 
 async function log(entry) {
@@ -96,7 +106,7 @@ async function main() {
     if (result?.timedOut) {
       await log({ event, outcome: 'timeout', ms: Date.now() - started });
     } else if (result) {
-      await log({ event, ...result.trace, ms: Date.now() - started });
+      await log({ event, session: shortSession(input.session_id), ...result.trace, ms: Date.now() - started });
       if (result.output) process.stdout.write(JSON.stringify(result.output));
     }
   } catch (e) {

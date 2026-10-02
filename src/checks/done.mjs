@@ -1,4 +1,5 @@
 import { currentTurn, toolCalls, unverifiedEdits } from '../transcript.mjs';
+import { EDIT_TOOLS } from '../edits.mjs';
 import { validVerdict } from '../verdict.mjs';
 
 const CLAIMS = 'claims-done';
@@ -10,7 +11,9 @@ const DESCRIPTIONS = {
 
 export async function checkDone({ input, records, threshold, backend, timeoutMs }) {
   if (input.stop_hook_active) return null;
-  if (!unverifiedEdits(toolCalls(currentTurn(records)))) return null;
+  const calls = toolCalls(currentTurn(records));
+  if (!calls.some((c) => EDIT_TOOLS.has(c.name))) return null;
+  if (!unverifiedEdits(calls)) return { trace: { check: 'done', outcome: 'skipped', reason: 'verified' } };
 
   const message = String(input.last_assistant_message ?? lastAssistantText(records)).slice(-2000);
   if (!message.trim()) return null;

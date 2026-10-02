@@ -30,6 +30,26 @@ Every check can be turned on or off on its own.
 
 We also built a *stuck* check (the same command failing again and again, or editing in circles) and measured it on 5,000 real agent turns before shipping. It never fired: current models read the error and change course on their own. So it isn't included.
 
+## What you see
+
+Flinch is quiet when nothing is wrong. When it speaks, you always see it:
+
+| Check | When it fires, you see |
+|---|---|
+| Your rules | A one-line notice, for example `Flinch flagged "tenant-filter" in OrderQueries.cs`. The agent gets the full rule. |
+| Unproven done | A line under the agent's last message (nudge mode), or the agent keeps working (block mode). |
+| Risky command | Claude Code's permission prompt, with Flinch's reason (nudge mode). |
+
+To see that Flinch is running even when it has nothing to say, add it to Claude Code's status line. It shows a segment like `flinch 12 checks · 1 flag · last 3:08pm` for the current session, and nothing in sessions where Flinch isn't loaded:
+
+```bash
+# in your status line script, which receives Claude Code's status JSON on stdin
+input=$(cat)
+flinch=$(echo "$input" | flinch statusline 2>/dev/null)
+```
+
+`flinch statusline` reads the same JSON Claude Code gives your status line command. If `flinch` isn't on the path where your status line runs, call `node <plugin folder>/src/cli.mjs statusline` instead.
+
 ## How well it works
 
 We measured the rules check on real edits from a production codebase's review history. Each case is an edit a human reviewer flagged as breaking a team rule, or a clean edit from the same codebase, many of them near misses. We tuned on one set of cases, then confirmed on a second set of 50 that shared no pull request, commit, or diff with the first.
@@ -165,7 +185,8 @@ The `flinch` command is on your path inside Claude Code while the plugin is enab
 
 | Command | What it does | |
 |---|---|---|
-| `flinch log` | How many checks ran, how many were flagged, each backend's speed, the rules flagged most, and the latest flags. `--days N` changes the window; `--json` prints raw numbers | available |
+| `flinch log` | When the last check ran, how many ran and were flagged, how many stood down (no rule covers the file, or tests already ran), each backend's speed, the rules flagged most, and the latest flags. `--days N` changes the window; `--json` prints raw numbers | available |
+| `flinch statusline` | A one-line summary for the current session, for Claude Code's status line | available |
 | `flinch status` | Active backend, mode, and enabled checks | *coming* |
 | `flinch rules init` | Draft `.flinch/rules.json` from your agent instructions | *coming* |
 | `flinch eval` | Score your rules against a labeled set of real edits | *coming* |
@@ -174,7 +195,7 @@ The `flinch` command is on your path inside Claude Code while the plugin is enab
 
 Flinch sends each check the smallest amount of context it can: the edited hunk, the command about to run, or a short summary of recent steps, plus the rules that apply. It never sends whole files or your full conversation. Requests go only to the backend you're using. With the Claude Code backend, nothing leaves your machine except through Claude Code itself.
 
-Flinch has no telemetry. It keeps a log on your machine, in Claude Code's plugin data folder (`~/.claude/plugins/data/`), with one line per check: the time, which check, the file type, the verdict, the confidence, and how long it took. It holds no file paths, code, or rule text, and it is never sent anywhere. The log is capped: at 5 MB the file rolls over and the older copy is replaced, so it never takes more than about 10 MB.
+Flinch has no telemetry. It keeps a log on your machine, in Claude Code's plugin data folder (`~/.claude/plugins/data/`), with one line per check: the time, a short session id, which check, the file type, the verdict, the confidence, and how long it took. It holds no file paths, code, or rule text, and it is never sent anywhere. The log is capped: at 5 MB the file rolls over and the older copy is replaced, so it never takes more than about 10 MB.
 
 ## Failing safe
 

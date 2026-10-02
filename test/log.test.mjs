@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, readFileSync, statSync, existsSync } from 'node
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { appendEntry, readEntries, findLogDirs, fileKind } from '../src/log.mjs';
-import { summarize, render } from '../src/cli.mjs';
+import { summarize, render, statusline } from '../src/cli.mjs';
 
 const dir = () => mkdtempSync(join(tmpdir(), 'flinch-log-'));
 
@@ -60,7 +60,7 @@ test('summarize counts outcomes, backends and top rules inside the window', () =
     { days: 7, now },
   );
   assert.equal(s.total, 4);
-  assert.deepEqual(s.outcomes, { flagged: 2, quiet: 1, unusable: 0, error: 1, timeout: 0 });
+  assert.deepEqual(s.outcomes, { flagged: 2, quiet: 1, skipped: 0, unusable: 0, error: 1, timeout: 0 });
   assert.deepEqual(s.backends, { jev: { checks: 3, p50: 200 } });
   assert.deepEqual(s.topRules, [['no-any', 1]]);
   assert.match(render(s), /Flagged\s+2/);
@@ -85,4 +85,39 @@ test('FLINCH_LOG_DIR overrides the plugin data folder', async () => {
   const { logDir } = await import('../src/log.mjs');
   assert.equal(logDir({ FLINCH_LOG_DIR: '/a', CLAUDE_PLUGIN_DATA: '/b' }), '/a');
   assert.equal(logDir({ CLAUDE_PLUGIN_DATA: '/b' }), '/b');
+});
+
+test('summarize counts stand-downs and ignores session-start lines as checks', () => {
+  const now = Date.parse('2026-10-10T12:00:00Z');
+  const ts = new Date(now - 60_000).toISOString();
+  const s = summarize(
+    [
+      { ts, check: 'session', outcome: 'started', session: 'aaaa1111' },
+      { ts, check: 'rules', outcome: 'skipped', reason: 'no-matching-rules' },
+      { ts, check: 'done', outcome: 'skipped', reason: 'verified' },
+      { ts, check: 'rules', outcome: 'quiet', backend: 'jev', ms: 300 },
+    ],
+    { days: 7, now },
+  );
+  assert.equal(s.total, 3);
+  assert.equal(s.sessions, 1);
+  assert.deepEqual(s.skipped, { noMatchingRules: 1, alreadyTested: 1 });
+  assert.match(render(s, now), /Stood down\s+2/);
+  assert.match(render(s, now), /Last check/);
+});
+
+test('statusline shows only the current session, and nothing when Flinch is not loaded', () => {
+  const now = Date.parse('2026-10-10T12:00:00Z');
+  const ts = new Date(now - 60_000).toISOString();
+  const entries = [
+    { ts, check: 'session', outcome: 'started', session: 'aaaa1111' },
+    { ts, check: 'rules', outcome: 'quiet', session: 'aaaa1111' },
+    { ts, check: 'risky', outcome: 'flagged', session: 'aaaa1111' },
+    { ts, check: 'rules', outcome: 'flagged', session: 'bbbb2222' },
+    { ts, check: 'session', outcome: 'started', session: 'cccc3333' },
+  ];
+  assert.match(statusline(entries, 'aaaa1111-rest-of-id', now), /^flinch 2 checks · 1 flag · last /);
+  assert.equal(statusline(entries, 'cccc3333-x', now), 'flinch on');
+  assert.equal(statusline(entries, 'dddd4444-x', now), '');
+  assert.equal(statusline(entries, undefined, now), '');
 });
