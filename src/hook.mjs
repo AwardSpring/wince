@@ -5,6 +5,7 @@ import { selectBackend, timeoutFor, guarded } from './backends/index.mjs';
 import { readTranscript } from './transcript.mjs';
 import { checkRules } from './checks/rules.mjs';
 import { checkDone } from './checks/done.mjs';
+import { checkRisky } from './checks/risky.mjs';
 import { appendEntry, logDir } from './log.mjs';
 
 const HARD_DEADLINE_MS = 25_000;
@@ -17,6 +18,14 @@ export async function run(event, input, env = process.env) {
   if (env.FLINCH_INNER) return null;
   const projectDir = env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd();
   const config = await loadConfig(projectDir);
+
+  if (event === 'pre-tool-use') {
+    if (!config.checks.risky) return null;
+    const result = checkRisky({ input, projectDir });
+    if (!result) return null;
+    return { output: preToolUseOutput(result.finding, config.mode), trace: { backend: 'patterns', mode: config.mode, ...result.trace, id: result.finding.id } };
+  }
+
   const backend = await selectBackend(env);
   if (!backend) return null;
   const ctx = { input, projectDir, threshold: config.threshold, backend: guarded(backend), timeoutMs: timeoutFor(backend) };
@@ -38,6 +47,18 @@ export async function run(event, input, env = process.env) {
   return {
     output: result.finding ? toOutput(result.finding, config.mode) : null,
     trace: { backend: backend.name, mode: config.mode, ...result.trace, id: result.finding?.id },
+  };
+}
+
+// Nudge mode asks the user before the command runs; block mode refuses it
+// and tells the agent why.
+export function preToolUseOutput(finding, mode) {
+  return {
+    hookSpecificOutput: {
+      hookEventName: 'PreToolUse',
+      permissionDecision: mode === 'block' ? 'deny' : 'ask',
+      permissionDecisionReason: finding.message,
+    },
   };
 }
 

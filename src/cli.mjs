@@ -69,7 +69,7 @@ async function main() {
     process.stdout.write('Usage: flinch log [--days N] [--json]\n');
     process.exit(command ? 1 : 0);
   }
-  const dirs = process.env.CLAUDE_PLUGIN_DATA ? [logDir(process.env)] : await findLogDirs();
+  const dirs = process.env.FLINCH_LOG_DIR || process.env.CLAUDE_PLUGIN_DATA ? [logDir(process.env)] : await findLogDirs();
   const entries = (await Promise.all(dirs.map(readEntries))).flat().sort((a, b) => String(a.ts).localeCompare(String(b.ts)));
   const summary = summarize(entries, { days: Number(values.days) });
   process.stdout.write((values.json ? JSON.stringify(summary, null, 2) : render(summary)) + '\n');

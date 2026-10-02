@@ -4,7 +4,7 @@ import { mainCheckout } from './worktree.mjs';
 
 export const DEFAULTS = Object.freeze({
   mode: 'nudge',
-  checks: { rules: true, done: true },
+  checks: { rules: true, done: true, risky: true },
   threshold: 0.6,
   rules: '.flinch/rules.json',
 });
