@@ -140,20 +140,20 @@ Include clean edits, especially near misses, as well as rule-breaking ones. The 
 
 ## Commands
 
-All *coming*:
+The `flinch` command is on your path inside Claude Code while the plugin is enabled.
 
-| Command | What it does |
-|---|---|
-| `flinch status` | Active backend, mode, and enabled checks |
-| `flinch log` | What Flinch caught, when, and which backend decided |
-| `flinch rules init` | Draft `.flinch/rules.json` from your agent instructions |
-| `flinch eval` | Score your rules against a labeled set of real edits |
+| Command | What it does | |
+|---|---|---|
+| `flinch log` | How many checks ran, how many were flagged, each backend's speed, the rules flagged most, and the latest flags. `--days N` changes the window; `--json` prints raw numbers | available |
+| `flinch status` | Active backend, mode, and enabled checks | *coming* |
+| `flinch rules init` | Draft `.flinch/rules.json` from your agent instructions | *coming* |
+| `flinch eval` | Score your rules against a labeled set of real edits | *coming* |
 
 ## Privacy
 
 Flinch sends each check the smallest amount of context it can: the edited hunk, the command about to run, or a short summary of recent steps, plus the rules that apply. It never sends whole files or your full conversation. Requests go only to the backend you're using. With the Claude Code backend, nothing leaves your machine except through Claude Code itself.
 
-Flinch has no telemetry. It keeps a log of what it flagged in Claude Code's plugin data folder on your machine (`~/.claude/plugins/data/`), and that log is never sent anywhere.
+Flinch has no telemetry. It keeps a log on your machine, in Claude Code's plugin data folder (`~/.claude/plugins/data/`), with one line per check: the time, which check, the file type, the verdict, the confidence, and how long it took. It holds no file paths, code, or rule text, and it is never sent anywhere. The log is capped: at 5 MB the file rolls over and the older copy is replaced, so it never takes more than about 10 MB.
 
 ## Failing safe
 

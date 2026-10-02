@@ -1,18 +1,18 @@
 #!/usr/bin/env node
-import { appendFile, mkdir } from 'node:fs/promises';
-import { join } from 'node:path';
-import { tmpdir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { loadConfig, loadProjectRules } from './config.mjs';
 import { selectBackend, timeoutFor, guarded } from './backends/index.mjs';
 import { readTranscript } from './transcript.mjs';
 import { checkRules } from './checks/rules.mjs';
 import { checkDone } from './checks/done.mjs';
+import { appendEntry, logDir } from './log.mjs';
 
 const HARD_DEADLINE_MS = 25_000;
 
 // Every path out of this file exits 0. A Flinch failure must never block
 // or slow the agent beyond the deadline, so errors are logged and dropped.
+// Returns { output, trace }: output goes to Claude Code, trace to the log.
+// A check that never reached a backend returns null and is not logged.
 export async function run(event, input, env = process.env) {
   if (env.FLINCH_INNER) return null;
   const projectDir = env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd();
@@ -21,20 +21,24 @@ export async function run(event, input, env = process.env) {
   if (!backend) return null;
   const ctx = { input, threshold: config.threshold, backend: guarded(backend), timeoutMs: timeoutFor(backend) };
 
+  let result = null;
+  let toOutput = null;
   if (event === 'post-tool-use' && config.checks.rules) {
     const rules = await loadProjectRules(projectDir, config);
     if (rules.length === 0) return null;
-    const finding = await checkRules({ ...ctx, rules });
-    return finding && postToolUseOutput(finding, config.mode);
-  }
-
-  if (event === 'stop' && config.checks.done) {
+    result = await checkRules({ ...ctx, rules });
+    toOutput = postToolUseOutput;
+  } else if (event === 'stop' && config.checks.done) {
     const records = await readTranscript(input.transcript_path);
-    const finding = await checkDone({ ...ctx, records });
-    return finding && stopOutput(finding, config.mode);
+    result = await checkDone({ ...ctx, records });
+    toOutput = stopOutput;
   }
+  if (!result) return null;
 
-  return null;
+  return {
+    output: result.finding ? toOutput(result.finding, config.mode) : null,
+    trace: { backend: backend.name, mode: config.mode, ...result.trace, id: result.finding?.id },
+  };
 }
 
 export function postToolUseOutput(finding, mode) {
@@ -47,11 +51,9 @@ export function stopOutput(finding, mode) {
   return { systemMessage: finding.message };
 }
 
-async function log(env, entry) {
+async function log(entry) {
   try {
-    const dir = env.CLAUDE_PLUGIN_DATA || join(tmpdir(), 'flinch');
-    await mkdir(dir, { recursive: true });
-    await appendFile(join(dir, 'log.jsonl'), JSON.stringify({ ts: new Date().toISOString(), ...entry }) + '\n');
+    await appendEntry(logDir(process.env), entry);
   } catch {}
 }
 
@@ -66,23 +68,23 @@ async function main() {
   const started = Date.now();
   try {
     const input = await readStdin();
-    const output = await Promise.race([
+    const result = await Promise.race([
       run(event, input),
       new Promise((resolve) => setTimeout(() => resolve({ timedOut: true }), HARD_DEADLINE_MS).unref()),
     ]);
-    if (output?.timedOut) {
-      await log(process.env, { event, outcome: 'timeout', ms: Date.now() - started });
-    } else if (output) {
-      await log(process.env, { event, outcome: 'flagged', output, ms: Date.now() - started });
-      process.stdout.write(JSON.stringify(output));
+    if (result?.timedOut) {
+      await log({ event, outcome: 'timeout', ms: Date.now() - started });
+    } else if (result) {
+      await log({ event, ...result.trace, ms: Date.now() - started });
+      if (result.output) process.stdout.write(JSON.stringify(result.output));
     }
   } catch (e) {
-    await log(process.env, { event, outcome: 'error', error: String(e?.message ?? e), ms: Date.now() - started });
+    await log({ event, outcome: 'error', error: String(e?.message ?? e).slice(0, 120), ms: Date.now() - started });
     if (process.env.FLINCH_DEBUG) process.stderr.write(`flinch: ${e?.stack ?? e}\n`);
   }
   process.exit(0);
 }
 
-if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replaceAll('\\', '/').split('/').pop())) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main();
 }

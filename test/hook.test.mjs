@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -146,4 +146,39 @@ test('edits made before the latest prompt do not count', () => {
   const dir = project();
   const path = transcript(dir, [prompt, toolUse('Edit', {}), said('Done.'), { type: 'user', message: { content: 'thanks, what does X do?' } }, said('X does Y.')]);
   assert.equal(runHook('stop', { transcript_path: path }, { dir, env: { FLINCH_FAKE: 'claims-done' } }).stdout, '');
+});
+
+function logLines(dir) {
+  const path = join(dir, '.data', 'log.jsonl');
+  try {
+    return readFileSync(path, 'utf8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l));
+  } catch {
+    return [];
+  }
+}
+
+test('every check that reaches a backend is logged, quiet ones included', () => {
+  const dir = project();
+  runHook('post-tool-use', edit(dir), { dir, env: { FLINCH_FAKE: 'none' } });
+  runHook('post-tool-use', edit(dir), { dir, env: { FLINCH_FAKE: 'no-any' } });
+  runHook('post-tool-use', edit(dir), { dir, env: { FLINCH_FAKE: 'throw' } });
+  const outcomes = logLines(dir).map((e) => e.outcome);
+  assert.deepEqual(outcomes, ['quiet', 'flagged', 'error']);
+});
+
+test('checks that never reach a backend are not logged', () => {
+  const dir = project({ rules: false });
+  runHook('post-tool-use', edit(dir), { dir, env: { FLINCH_FAKE: 'no-any' } });
+  assert.deepEqual(logLines(dir), []);
+});
+
+test('the log holds no file paths, code or rule text', () => {
+  const dir = project();
+  runHook('post-tool-use', edit(dir), { dir, env: { FLINCH_FAKE: 'no-any' } });
+  const raw = readFileSync(join(dir, '.data', 'log.jsonl'), 'utf8');
+  const [entry] = logLines(dir);
+  assert.equal(entry.id, 'no-any');
+  assert.equal(entry.kind, '.ts');
+  assert.equal(entry.backend, 'fake');
+  assert.doesNotMatch(raw, /a\.ts|src|any type|let x/);
 });
