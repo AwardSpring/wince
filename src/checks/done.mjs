@@ -38,8 +38,8 @@ Does the message claim the work is finished, fixed or working?`;
       check: 'done',
       id: 'unproven-done',
       message: subagent
-        ? 'Flinch: you said your work is done, but you have not run any test, build or check since your last edit. Run the relevant tests or build now, then report what they showed.'
-        : 'Flinch: you said the work is done, but nothing has been tested or built since your last edit. Run the relevant tests or build, then report what they showed.',
+        ? 'Wince: you said your work is done, but you have not run any test, build or check since your last edit. Run the relevant tests or build now, then report what they showed.'
+        : 'Wince: you said the work is done, but nothing has been tested or built since your last edit. Run the relevant tests or build, then report what they showed.',
     },
   };
 }

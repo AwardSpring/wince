@@ -7,11 +7,11 @@ export const DEFAULTS = Object.freeze({
   checks: { rules: true, done: true, risky: true },
   threshold: 0.6,
   subagents: 'send-back',
-  rules: '.flinch/rules.json',
+  rules: '.wince/rules.json',
 });
 
 export async function loadConfig(projectDir) {
-  const raw = await readProjectJson(projectDir, '.flinch.json');
+  const raw = await readProjectJson(projectDir, '.wince.json');
   return {
     ...DEFAULTS,
     ...raw,
@@ -25,7 +25,7 @@ export async function loadProjectRules(projectDir, config) {
 }
 
 // A file in the project wins. Inside a linked git worktree that lacks it,
-// the main checkout's copy applies, so untracked Flinch files cover every
+// the main checkout's copy applies, so untracked Wince files cover every
 // worktree of the repository.
 export async function readProjectJson(projectDir, relativePath) {
   const own = await readJson(join(projectDir, relativePath));

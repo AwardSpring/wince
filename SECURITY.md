@@ -8,12 +8,12 @@ Report them privately through GitHub: on this repository, go to **Security → R
 
 ## What counts
 
-Flinch sits between a coding agent and its tools, so we especially want to hear about:
+Wince sits between a coding agent and its tools, so we especially want to hear about:
 
-- Ways to make Flinch **send more data** to a backend than documented, or to the wrong place.
-- Ways for repository content (rules files, file contents, command output) to **steer Flinch's verdicts** in a way that lets a harmful action through. This includes prompt injection that turns off the risky-command check.
-- Flinch **blocking, hanging, or crashing** the agent when it should fail open.
-- Leaks of API keys from config, logs, or `flinch log` output.
+- Ways to make Wince **send more data** to a backend than documented, or to the wrong place.
+- Ways for repository content (rules files, file contents, command output) to **steer Wince's verdicts** in a way that lets a harmful action through. This includes prompt injection that turns off the risky-command check.
+- Wince **blocking, hanging, or crashing** the agent when it should fail open.
+- Leaks of API keys from config, logs, or `wince log` output.
 
 ## Supported versions
 

@@ -9,15 +9,15 @@ import { fileURLToPath } from 'node:url';
 const HOOK = fileURLToPath(new URL('../src/hook.mjs', import.meta.url));
 
 function project({ config, rules = true } = {}) {
-  const dir = mkdtempSync(join(tmpdir(), 'flinch-test-'));
+  const dir = mkdtempSync(join(tmpdir(), 'wince-test-'));
   if (rules) {
-    mkdirSync(join(dir, '.flinch'));
+    mkdirSync(join(dir, '.wince'));
     writeFileSync(
-      join(dir, '.flinch', 'rules.json'),
+      join(dir, '.wince', 'rules.json'),
       JSON.stringify({ rules: [{ id: 'no-any', applies: ['**/*.ts'], rule: "Do not add the 'any' type." }] }),
     );
   }
-  if (config) writeFileSync(join(dir, '.flinch.json'), JSON.stringify(config));
+  if (config) writeFileSync(join(dir, '.wince.json'), JSON.stringify(config));
   return dir;
 }
 
@@ -27,8 +27,8 @@ function runHook(event, input, { dir, env = {} }) {
     input: typeof input === 'string' ? input : JSON.stringify(input),
     env: {
       ...process.env,
-      FLINCH_INNER: '',
-      FLINCH_BACKEND: 'fake',
+      WINCE_INNER: '',
+      WINCE_BACKEND: 'fake',
       CLAUDE_PROJECT_DIR: dir,
       CLAUDE_PLUGIN_DATA: join(dir, '.data'),
       ...env,
@@ -48,7 +48,7 @@ const edit = (dir) => ({
 
 test('a confident rule hit nudges with additionalContext', () => {
   const dir = project();
-  const out = runHook('post-tool-use', edit(dir), { dir, env: { FLINCH_FAKE: 'no-any' } });
+  const out = runHook('post-tool-use', edit(dir), { dir, env: { WINCE_FAKE: 'no-any' } });
   assert.equal(out.code, 0);
   const json = JSON.parse(out.stdout);
   assert.equal(json.hookSpecificOutput.hookEventName, 'PostToolUse');
@@ -58,23 +58,23 @@ test('a confident rule hit nudges with additionalContext', () => {
 
 test('block mode turns a rule hit into a block decision', () => {
   const dir = project({ config: { mode: 'block' } });
-  const json = JSON.parse(runHook('post-tool-use', edit(dir), { dir, env: { FLINCH_FAKE: 'no-any' } }).stdout);
+  const json = JSON.parse(runHook('post-tool-use', edit(dir), { dir, env: { WINCE_FAKE: 'no-any' } }).stdout);
   assert.equal(json.decision, 'block');
   assert.match(json.reason, /no-any/);
 });
 
 test('stays silent on none, low confidence, and files no rule covers', () => {
   const dir = project();
-  assert.equal(runHook('post-tool-use', edit(dir), { dir, env: { FLINCH_FAKE: 'none' } }).stdout, '');
-  assert.equal(runHook('post-tool-use', edit(dir), { dir, env: { FLINCH_FAKE: 'no-any', FLINCH_FAKE_CONFIDENCE: '0.5' } }).stdout, '');
+  assert.equal(runHook('post-tool-use', edit(dir), { dir, env: { WINCE_FAKE: 'none' } }).stdout, '');
+  assert.equal(runHook('post-tool-use', edit(dir), { dir, env: { WINCE_FAKE: 'no-any', WINCE_FAKE_CONFIDENCE: '0.5' } }).stdout, '');
   const css = { ...edit(dir), tool_input: { file_path: join(dir, 'a.css'), old_string: 'a', new_string: 'b' } };
-  assert.equal(runHook('post-tool-use', css, { dir, env: { FLINCH_FAKE: 'no-any' } }).stdout, '');
+  assert.equal(runHook('post-tool-use', css, { dir, env: { WINCE_FAKE: 'no-any' } }).stdout, '');
 });
 
 for (const behavior of ['throw', 'garbage']) {
   test(`fails open when the backend returns ${behavior}`, () => {
     const dir = project();
-    const out = runHook('post-tool-use', edit(dir), { dir, env: { FLINCH_FAKE: behavior } });
+    const out = runHook('post-tool-use', edit(dir), { dir, env: { WINCE_FAKE: behavior } });
     assert.equal(out.code, 0);
     assert.equal(out.stdout, '');
   });
@@ -82,7 +82,7 @@ for (const behavior of ['throw', 'garbage']) {
 
 test('fails open within the backend timeout when the backend hangs', () => {
   const dir = project();
-  const out = runHook('post-tool-use', edit(dir), { dir, env: { FLINCH_FAKE: 'hang' } });
+  const out = runHook('post-tool-use', edit(dir), { dir, env: { WINCE_FAKE: 'hang' } });
   assert.equal(out.code, 0);
   assert.equal(out.stdout, '');
   assert.ok(out.ms < 5000, `took ${out.ms}ms`);
@@ -94,16 +94,16 @@ test('fails open on malformed stdin, a missing rules file, and broken config', (
   assert.equal(malformed.code, 0);
   assert.equal(malformed.stdout, '');
   const bare = project({ rules: false });
-  assert.equal(runHook('post-tool-use', edit(bare), { dir: bare, env: { FLINCH_FAKE: 'no-any' } }).stdout, '');
+  assert.equal(runHook('post-tool-use', edit(bare), { dir: bare, env: { WINCE_FAKE: 'no-any' } }).stdout, '');
   const broken = project();
-  writeFileSync(join(broken, '.flinch.json'), '{ nope');
-  const out = runHook('post-tool-use', edit(broken), { dir: broken, env: { FLINCH_FAKE: 'no-any' } });
+  writeFileSync(join(broken, '.wince.json'), '{ nope');
+  const out = runHook('post-tool-use', edit(broken), { dir: broken, env: { WINCE_FAKE: 'no-any' } });
   assert.equal(out.code, 0);
 });
 
-test('does nothing inside a session Flinch itself spawned', () => {
+test('does nothing inside a session Wince itself spawned', () => {
   const dir = project();
-  const out = runHook('post-tool-use', edit(dir), { dir, env: { FLINCH_FAKE: 'no-any', FLINCH_INNER: '1' } });
+  const out = runHook('post-tool-use', edit(dir), { dir, env: { WINCE_FAKE: 'no-any', WINCE_INNER: '1' } });
   assert.equal(out.stdout, '');
 });
 
@@ -120,20 +120,20 @@ const said = (text) => ({ type: 'assistant', message: { content: [{ type: 'text'
 test('stop warns the user about an unverified done claim in nudge mode', () => {
   const dir = project();
   const path = transcript(dir, [prompt, toolUse('Edit', { file_path: 'a.ts' }), said('Fixed! All done.')]);
-  const out = runHook('stop', { transcript_path: path, last_assistant_message: 'Fixed! All done.' }, { dir, env: { FLINCH_FAKE: 'claims-done' } });
+  const out = runHook('stop', { transcript_path: path, last_assistant_message: 'Fixed! All done.' }, { dir, env: { WINCE_FAKE: 'claims-done' } });
   assert.match(JSON.parse(out.stdout).systemMessage, /nothing has been tested/);
 });
 
 test('stop sends the agent back in block mode', () => {
   const dir = project({ config: { mode: 'block' } });
   const path = transcript(dir, [prompt, toolUse('Write', { file_path: 'a.ts' }), said('Done.')]);
-  const json = JSON.parse(runHook('stop', { transcript_path: path }, { dir, env: { FLINCH_FAKE: 'claims-done' } }).stdout);
+  const json = JSON.parse(runHook('stop', { transcript_path: path }, { dir, env: { WINCE_FAKE: 'claims-done' } }).stdout);
   assert.equal(json.decision, 'block');
 });
 
 test('stop stays silent after a test run, with no edits, or when already re-prompted', () => {
   const dir = project();
-  const env = { FLINCH_FAKE: 'claims-done' };
+  const env = { WINCE_FAKE: 'claims-done' };
   const tested = transcript(dir, [prompt, toolUse('Edit', {}), toolUse('Bash', { command: 'npm test' }), said('Done.')]);
   assert.equal(runHook('stop', { transcript_path: tested }, { dir, env }).stdout, '');
   const noEdits = transcript(dir, [prompt, toolUse('Read', {}), said('Here is the answer.')]);
@@ -145,7 +145,7 @@ test('stop stays silent after a test run, with no edits, or when already re-prom
 test('edits made before the latest prompt do not count', () => {
   const dir = project();
   const path = transcript(dir, [prompt, toolUse('Edit', {}), said('Done.'), { type: 'user', message: { content: 'thanks, what does X do?' } }, said('X does Y.')]);
-  assert.equal(runHook('stop', { transcript_path: path }, { dir, env: { FLINCH_FAKE: 'claims-done' } }).stdout, '');
+  assert.equal(runHook('stop', { transcript_path: path }, { dir, env: { WINCE_FAKE: 'claims-done' } }).stdout, '');
 });
 
 function logLines(dir) {
@@ -159,22 +159,22 @@ function logLines(dir) {
 
 test('every check that reaches a backend is logged, quiet ones included', () => {
   const dir = project();
-  runHook('post-tool-use', edit(dir), { dir, env: { FLINCH_FAKE: 'none' } });
-  runHook('post-tool-use', edit(dir), { dir, env: { FLINCH_FAKE: 'no-any' } });
-  runHook('post-tool-use', edit(dir), { dir, env: { FLINCH_FAKE: 'throw' } });
+  runHook('post-tool-use', edit(dir), { dir, env: { WINCE_FAKE: 'none' } });
+  runHook('post-tool-use', edit(dir), { dir, env: { WINCE_FAKE: 'no-any' } });
+  runHook('post-tool-use', edit(dir), { dir, env: { WINCE_FAKE: 'throw' } });
   const outcomes = logLines(dir).map((e) => e.outcome);
   assert.deepEqual(outcomes, ['quiet', 'flagged', 'error']);
 });
 
 test('checks that never reach a backend are not logged', () => {
   const dir = project({ rules: false });
-  runHook('post-tool-use', edit(dir), { dir, env: { FLINCH_FAKE: 'no-any' } });
+  runHook('post-tool-use', edit(dir), { dir, env: { WINCE_FAKE: 'no-any' } });
   assert.deepEqual(logLines(dir), []);
 });
 
 test('the log holds no file paths, code or rule text', () => {
   const dir = project();
-  runHook('post-tool-use', edit(dir), { dir, env: { FLINCH_FAKE: 'no-any' } });
+  runHook('post-tool-use', edit(dir), { dir, env: { WINCE_FAKE: 'no-any' } });
   const raw = readFileSync(join(dir, '.data', 'log.jsonl'), 'utf8');
   const [entry] = logLines(dir);
   assert.equal(entry.id, 'no-any');
@@ -201,7 +201,7 @@ test('a risky command is refused in block mode', () => {
 
 test('the risky check needs no backend and no rules file', () => {
   const dir = project({ rules: false });
-  const out = runHook('pre-tool-use', shell('npm publish'), { dir, env: { FLINCH_BACKEND: 'none-such', TYPESAFE_API_KEY: '', ANTHROPIC_API_KEY: '' } });
+  const out = runHook('pre-tool-use', shell('npm publish'), { dir, env: { WINCE_BACKEND: 'none-such', TYPESAFE_API_KEY: '', ANTHROPIC_API_KEY: '' } });
   assert.equal(JSON.parse(out.stdout).hookSpecificOutput.permissionDecision, 'ask');
 });
 
@@ -225,17 +225,17 @@ test('flagged risky commands are logged without the command text', () => {
 
 test('a rule nudge also shows the user a one-line notice', () => {
   const dir = project();
-  const json = JSON.parse(runHook('post-tool-use', edit(dir), { dir, env: { FLINCH_FAKE: 'no-any' } }).stdout);
-  assert.equal(json.systemMessage, 'Flinch flagged "no-any" in a.ts');
+  const json = JSON.parse(runHook('post-tool-use', edit(dir), { dir, env: { WINCE_FAKE: 'no-any' } }).stdout);
+  assert.equal(json.systemMessage, 'Wince flagged "no-any" in a.ts');
 });
 
 test('stand-downs and session starts are logged with a short session id', () => {
   const dir = project();
   const css = { ...edit(dir), session_id: 'abcdef1234567890', tool_input: { file_path: join(dir, 'a.css'), old_string: 'a', new_string: 'b' } };
-  runHook('post-tool-use', css, { dir, env: { FLINCH_FAKE: 'no-any' } });
+  runHook('post-tool-use', css, { dir, env: { WINCE_FAKE: 'no-any' } });
   runHook('session-start', { session_id: 'abcdef1234567890' }, { dir });
   const tested = transcript(dir, [prompt, toolUse('Edit', {}), toolUse('Bash', { command: 'npm test' }), said('Done.')]);
-  runHook('stop', { transcript_path: tested, session_id: 'abcdef1234567890' }, { dir, env: { FLINCH_FAKE: 'claims-done' } });
+  runHook('stop', { transcript_path: tested, session_id: 'abcdef1234567890' }, { dir, env: { WINCE_FAKE: 'claims-done' } });
   const lines = logLines(dir);
   assert.deepEqual(lines.map((e) => [e.check, e.outcome, e.reason]), [
     ['rules', 'skipped', 'no-matching-rules'],
@@ -251,7 +251,7 @@ const side = (r) => ({ ...r, isSidechain: true });
 test('a subagent that edits and says done without testing is sent back, in nudge mode too', () => {
   const dir = project();
   const path = transcript(dir, [side(prompt), side(toolUse('Edit', { file_path: 'a.ts' })), side(said('Done, all fixed.'))]);
-  const out = runHook('subagent-stop', { agent_transcript_path: path, agent_type: 'general-purpose', last_assistant_message: 'Done, all fixed.' }, { dir, env: { FLINCH_FAKE: 'claims-done' } });
+  const out = runHook('subagent-stop', { agent_transcript_path: path, agent_type: 'general-purpose', last_assistant_message: 'Done, all fixed.' }, { dir, env: { WINCE_FAKE: 'claims-done' } });
   const json = JSON.parse(out.stdout);
   assert.equal(json.decision, 'block');
   assert.match(json.reason, /Run the relevant tests or build now/);
@@ -261,27 +261,27 @@ test('a subagent that edits and says done without testing is sent back, in nudge
 test('"subagents": "log" only logs the finding', () => {
   const dir = project({ config: { subagents: 'log' } });
   const path = transcript(dir, [side(prompt), side(toolUse('Edit', {})), side(said('Done.'))]);
-  assert.equal(runHook('subagent-stop', { agent_transcript_path: path }, { dir, env: { FLINCH_FAKE: 'claims-done' } }).stdout, '');
+  assert.equal(runHook('subagent-stop', { agent_transcript_path: path }, { dir, env: { WINCE_FAKE: 'claims-done' } }).stdout, '');
   assert.equal(logLines(dir).at(-1).outcome, 'flagged');
 });
 
 test('block mode sends the subagent back', () => {
   const dir = project({ config: { mode: 'block' } });
   const path = transcript(dir, [side(prompt), side(toolUse('Write', { file_path: 'a.ts' })), side(said('Done.'))]);
-  assert.equal(JSON.parse(runHook('subagent-stop', { agent_transcript_path: path }, { dir, env: { FLINCH_FAKE: 'claims-done' } }).stdout).decision, 'block');
+  assert.equal(JSON.parse(runHook('subagent-stop', { agent_transcript_path: path }, { dir, env: { WINCE_FAKE: 'claims-done' } }).stdout).decision, 'block');
 });
 
 test('a subagent that tested through PowerShell stands down', () => {
   const dir = project();
   const path = transcript(dir, [side(prompt), side(toolUse('Edit', {})), side(toolUse('PowerShell', { command: 'dotnet test Awardspring.Tests' })), side(said('Done.'))]);
-  assert.equal(runHook('subagent-stop', { agent_transcript_path: path }, { dir, env: { FLINCH_FAKE: 'claims-done' } }).stdout, '');
+  assert.equal(runHook('subagent-stop', { agent_transcript_path: path }, { dir, env: { WINCE_FAKE: 'claims-done' } }).stdout, '');
   assert.equal(logLines(dir).at(-1).reason, 'verified');
 });
 
 test('the main agent check ignores subagent records, and the subagent check ignores the main agent', () => {
   const dir = project();
   const mainOnly = transcript(dir, [prompt, side(toolUse('Edit', {})), said('Done.')]);
-  assert.equal(runHook('stop', { transcript_path: mainOnly }, { dir, env: { FLINCH_FAKE: 'claims-done' } }).stdout, '');
+  assert.equal(runHook('stop', { transcript_path: mainOnly }, { dir, env: { WINCE_FAKE: 'claims-done' } }).stdout, '');
   const subOnly = transcript(dir, [prompt, toolUse('Edit', {}), said('Done.')]);
-  assert.equal(runHook('subagent-stop', { agent_transcript_path: subOnly }, { dir, env: { FLINCH_FAKE: 'claims-done' } }).stdout, '');
+  assert.equal(runHook('subagent-stop', { agent_transcript_path: subOnly }, { dir, env: { WINCE_FAKE: 'claims-done' } }).stdout, '');
 });

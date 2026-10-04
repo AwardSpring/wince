@@ -45,7 +45,7 @@ const quiet = [
   'git worktree remove --force ../wt',
   'rm -rf node_modules dist',
   'rm -rf ./build/output',
-  'rm -rf /tmp/flinch-test',
+  'rm -rf /tmp/wince-test',
   'rm -f /etc/hosts.bak',
   'rm -rf "$TMPDIR/x"',
   'Remove-Item -Recurse -Force .\\bin',

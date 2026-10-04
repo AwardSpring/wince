@@ -1,7 +1,7 @@
 {
-  "name": "@awardspring/flinch",
+  "name": "@awardspring/wince",
   "version": "0.0.0",
-  "description": "Your coding agent flinches before the mistake.",
+  "description": "Your coding agent winces before the mistake.",
   "license": "MIT",
   "type": "module",
   "private": true,

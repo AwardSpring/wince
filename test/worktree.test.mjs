@@ -12,7 +12,7 @@ const HOOK = fileURLToPath(new URL('../src/hook.mjs', import.meta.url));
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, stdio: 'pipe' });
 
 function repoWithWorktree() {
-  const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'flinch-wt-')));
+  const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'wince-wt-')));
   const main = join(root, 'main');
   mkdirSync(main);
   git(main, 'init', '-q');
@@ -23,8 +23,8 @@ function repoWithWorktree() {
 }
 
 const rulesFile = (dir, id) => {
-  mkdirSync(join(dir, '.flinch'), { recursive: true });
-  writeFileSync(join(dir, '.flinch', 'rules.json'), JSON.stringify({ rules: [{ id, applies: ['src/**/*.ts'], rule: 'Do not add any.' }] }));
+  mkdirSync(join(dir, '.wince'), { recursive: true });
+  writeFileSync(join(dir, '.wince', 'rules.json'), JSON.stringify({ rules: [{ id, applies: ['src/**/*.ts'], rule: 'Do not add any.' }] }));
 };
 
 test('mainCheckout finds the main repository from a linked worktree', async () => {
@@ -35,20 +35,20 @@ test('mainCheckout finds the main repository from a linked worktree', async () =
 test('mainCheckout is null for a main checkout and for a folder outside git', async () => {
   const { main } = repoWithWorktree();
   assert.equal(await mainCheckout(main), null);
-  assert.equal(await mainCheckout(mkdtempSync(join(tmpdir(), 'flinch-nogit-'))), null);
+  assert.equal(await mainCheckout(mkdtempSync(join(tmpdir(), 'wince-nogit-'))), null);
 });
 
 test('a worktree without its own rules uses the main checkout rules', async () => {
   const { main, tree } = repoWithWorktree();
   rulesFile(main, 'from-main');
-  assert.equal((await readProjectJson(tree, '.flinch/rules.json')).rules[0].id, 'from-main');
+  assert.equal((await readProjectJson(tree, '.wince/rules.json')).rules[0].id, 'from-main');
 });
 
 test('a worktree rules file wins over the main checkout', async () => {
   const { main, tree } = repoWithWorktree();
   rulesFile(main, 'from-main');
   rulesFile(tree, 'from-tree');
-  assert.equal((await readProjectJson(tree, '.flinch/rules.json')).rules[0].id, 'from-tree');
+  assert.equal((await readProjectJson(tree, '.wince/rules.json')).rules[0].id, 'from-tree');
 });
 
 test('the hook checks edits in a worktree against the main checkout rules, from a subfolder too', () => {
@@ -60,7 +60,7 @@ test('the hook checks edits in a worktree against the main checkout rules, from 
       tool_name: 'Edit',
       tool_input: { file_path: join(tree, 'src', 'a.ts'), old_string: 'x', new_string: 'let y: any;' },
     }),
-    env: { ...process.env, FLINCH_INNER: '', FLINCH_BACKEND: 'fake', FLINCH_FAKE: 'no-any', CLAUDE_PROJECT_DIR: tree, CLAUDE_PLUGIN_DATA: join(tree, '.data') },
+    env: { ...process.env, WINCE_INNER: '', WINCE_BACKEND: 'fake', WINCE_FAKE: 'no-any', CLAUDE_PROJECT_DIR: tree, CLAUDE_PLUGIN_DATA: join(tree, '.data') },
     encoding: 'utf8',
   });
   assert.equal(res.status, 0);
@@ -68,7 +68,7 @@ test('the hook checks edits in a worktree against the main checkout rules, from 
 });
 
 test('an edit in a worktree nested inside the main checkout matches rules from that worktree root', () => {
-  const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'flinch-nest-')));
+  const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'wince-nest-')));
   git(root, 'init', '-q');
   git(root, '-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'init');
   const nested = join(root, '.worktrees', 'feature');
@@ -76,7 +76,7 @@ test('an edit in a worktree nested inside the main checkout matches rules from t
   rulesFile(root, 'no-any');
   const res = spawnSync(process.execPath, [HOOK, 'post-tool-use'], {
     input: JSON.stringify({ cwd: root, tool_name: 'Edit', tool_input: { file_path: join(nested, 'src', 'a.ts'), old_string: 'x', new_string: 'let y: any;' } }),
-    env: { ...process.env, FLINCH_INNER: '', FLINCH_BACKEND: 'fake', FLINCH_FAKE: 'no-any', CLAUDE_PROJECT_DIR: root, CLAUDE_PLUGIN_DATA: join(root, '.data') },
+    env: { ...process.env, WINCE_INNER: '', WINCE_BACKEND: 'fake', WINCE_FAKE: 'no-any', CLAUDE_PROJECT_DIR: root, CLAUDE_PLUGIN_DATA: join(root, '.data') },
     encoding: 'utf8',
   });
   assert.match(JSON.parse(res.stdout).hookSpecificOutput.additionalContext, /src\/a\.ts may break "no-any"/);

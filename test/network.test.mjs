@@ -11,7 +11,7 @@ const HOOK = fileURLToPath(new URL('../src/hook.mjs', import.meta.url));
 
 function runHook(input, env) {
   return new Promise((resolve) => {
-    const child = spawn(process.execPath, [HOOK, 'post-tool-use'], { env: { ...process.env, FLINCH_INNER: '', ...env } });
+    const child = spawn(process.execPath, [HOOK, 'post-tool-use'], { env: { ...process.env, WINCE_INNER: '', ...env } });
     let stdout = '';
     let stderr = '';
     child.stdout.on('data', (d) => (stdout += d));
@@ -34,15 +34,15 @@ test('the Jev backend works end to end through the hook', async () => {
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   const { port } = server.address();
 
-  const dir = mkdtempSync(join(tmpdir(), 'flinch-net-'));
-  mkdirSync(join(dir, '.flinch'));
-  writeFileSync(join(dir, '.flinch', 'rules.json'), JSON.stringify({ rules: [{ id: 'no-any', applies: ['**/*.ts'], rule: 'No any.' }] }));
+  const dir = mkdtempSync(join(tmpdir(), 'wince-net-'));
+  mkdirSync(join(dir, '.wince'));
+  writeFileSync(join(dir, '.wince', 'rules.json'), JSON.stringify({ rules: [{ id: 'no-any', applies: ['**/*.ts'], rule: 'No any.' }] }));
 
   try {
     for (let i = 0; i < 3; i++) {
       const out = await runHook(
         { cwd: dir, tool_name: 'Edit', tool_input: { file_path: join(dir, 'a.ts'), old_string: 'a', new_string: 'let x: any;' } },
-        { FLINCH_BACKEND: 'jev', TYPESAFE_API_KEY: 'test', FLINCH_JEV_URL: `http://127.0.0.1:${port}/v1/systemone`, CLAUDE_PROJECT_DIR: dir, CLAUDE_PLUGIN_DATA: join(dir, '.data') },
+        { WINCE_BACKEND: 'jev', TYPESAFE_API_KEY: 'test', WINCE_JEV_URL: `http://127.0.0.1:${port}/v1/systemone`, CLAUDE_PROJECT_DIR: dir, CLAUDE_PLUGIN_DATA: join(dir, '.data') },
       );
       assert.equal(out.code, 0, out.stderr);
       assert.doesNotMatch(out.stderr, /Assertion failed/);

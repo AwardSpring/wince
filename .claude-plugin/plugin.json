@@ -1,13 +1,13 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
-  "name": "flinch",
+  "name": "wince",
   "version": "0.1.0",
-  "description": "Your coding agent flinches before the mistake. Catches rule-breaking edits and unproven done claims.",
+  "description": "Your coding agent winces before the mistake. Catches rule-breaking edits and unproven done claims.",
   "author": {
     "name": "AwardSpring"
   },
-  "homepage": "https://github.com/AwardSpring/flinch",
-  "repository": "https://github.com/AwardSpring/flinch",
+  "homepage": "https://github.com/AwardSpring/wince",
+  "repository": "https://github.com/AwardSpring/wince",
   "license": "MIT",
   "keywords": [
     "hooks",
@@ -19,7 +19,7 @@
     "jev_api_key": {
       "type": "string",
       "title": "Jev API key (optional)",
-      "description": "Key from typesafe.ai. With it, checks run in about 150ms. Without it, Flinch uses ANTHROPIC_API_KEY or your Claude Code login.",
+      "description": "Key from typesafe.ai. With it, checks run in about 150ms. Without it, Wince uses ANTHROPIC_API_KEY or your Claude Code login.",
       "required": false,
       "sensitive": true
     }

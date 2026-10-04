@@ -5,16 +5,16 @@ body:
   - type: textarea
     id: problem
     attributes:
-      label: What does your agent keep doing that Flinch should catch?
+      label: What does your agent keep doing that Wince should catch?
       description: A real example helps most.
     validations:
       required: true
   - type: textarea
     id: idea
     attributes:
-      label: What should Flinch do about it?
+      label: What should Wince do about it?
   - type: textarea
     id: noise
     attributes:
       label: When would this be a false alarm?
-      description: Every check costs attention. Help us keep Flinch quiet when it should be.
+      description: Every check costs attention. Help us keep Wince quiet when it should be.
