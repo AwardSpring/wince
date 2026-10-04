@@ -85,7 +85,7 @@ test('fails open within the backend timeout when the backend hangs', () => {
   const out = runHook('post-tool-use', edit(dir), { dir, env: { WINCE_FAKE: 'hang' } });
   assert.equal(out.code, 0);
   assert.equal(out.stdout, '');
-  assert.ok(out.ms < 5000, `took ${out.ms}ms`);
+  assert.ok(out.ms < 10_000, `took ${out.ms}ms`);
 });
 
 test('fails open on malformed stdin, a missing rules file, and broken config', () => {
@@ -298,4 +298,12 @@ test('an edit inside a repository still counts', () => {
   mkdirSync(join(dir, '.git'));
   const path = transcript(dir, [prompt, toolUse('Edit', { file_path: join(dir, 'src', 'a.ts') }), said('Done, it works.')]);
   assert.match(JSON.parse(runHook('stop', { transcript_path: path }, { dir, env: { WINCE_FAKE: 'claims-done' } }).stdout).systemMessage, /nothing has been tested/);
+});
+
+test('errors are logged with the session they came from', () => {
+  const dir = project();
+  runHook('post-tool-use', { ...edit(dir), session_id: 'feedbeef-1234' }, { dir, env: { WINCE_FAKE: 'throw' } });
+  const entry = logLines(dir).at(-1);
+  assert.equal(entry.outcome, 'error');
+  assert.equal(entry.session, 'feedbeef');
 });

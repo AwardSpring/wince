@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "wince",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Your coding agent winces before the mistake. Catches rule-breaking edits and unproven done claims.",
   "author": {
     "name": "AwardSpring"

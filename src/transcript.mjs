@@ -35,7 +35,7 @@ export function toolCalls(records, { sidechain = false } = {}) {
   for (const r of records) {
     if (r.type !== 'assistant' || Boolean(r.isSidechain) !== sidechain) continue;
     for (const block of r.message?.content ?? []) {
-      if (block?.type === 'tool_use') calls.push({ name: block.name, input: block.input ?? {} });
+      if (block?.type === 'tool_use') calls.push({ name: block.name, input: block.input ?? {}, ts: Date.parse(r.timestamp) });
     }
   }
   return calls;

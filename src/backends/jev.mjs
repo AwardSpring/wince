@@ -37,7 +37,7 @@ export function readAnswer(body, choices) {
   return { choice: answer.choice, confidence, probabilities: answer.probabilities };
 }
 
-export async function classify(question, choices, { timeoutMs = 1500, env = process.env, ...opts } = {}) {
+export async function classify(question, choices, { timeoutMs = 3000, env = process.env, ...opts } = {}) {
   const res = await fetch(endpoint(env), {
     method: 'POST',
     signal: AbortSignal.timeout(timeoutMs),
