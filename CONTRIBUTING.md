@@ -66,6 +66,7 @@ Claude Code updates an installed plugin only when its version number changes. A 
 1. Bump `version` in both `.claude-plugin/plugin.json` and `package.json`. A test fails if they differ.
 2. Move the **Unreleased** entries in `CHANGELOG.md` under the new version.
 3. Merge to `main`. Users get it with `/plugin marketplace update wince` and `/plugin update wince@wince`.
+4. Tag the merge commit `vX.Y.Z` and publish a GitHub release with the changelog section as its notes. The tag is for people reading the repo; Claude Code itself goes by the version number.
 
 ## Code of conduct
 
