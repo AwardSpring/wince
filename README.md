@@ -4,7 +4,7 @@
 
 Wince is a [Claude Code](https://code.claude.com) plugin that watches each step your agent takes and speaks up when something looks wrong. You don't have to be watching: it catches edits that break your project's rules, risky commands, and "done!" claims that were never checked.
 
-> **Status: pre-release.** Wince is in active development and not yet published. The **rules**, **unproven done** and **risky command** checks work today. The other checks and the `wince` commands are designed but not built yet, and are marked *coming* below.
+> **Status: early release (0.1).** The **rules**, **unproven done** and **risky command** checks work today. The other checks and the `wince` commands are designed but not built yet, and are marked *coming* below.
 
 ```
 ● Bash(git reset --hard origin/main)
