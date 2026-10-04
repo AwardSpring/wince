@@ -1,5 +1,6 @@
 import { currentTurn, toolCalls, unverifiedEdits } from '../transcript.mjs';
-import { EDIT_TOOLS } from '../edits.mjs';
+import { EDIT_TOOLS, repoRoot } from '../edits.mjs';
+import { isAbsolute } from 'node:path';
 import { validVerdict } from '../verdict.mjs';
 
 const CLAIMS = 'claims-done';
@@ -13,7 +14,7 @@ export async function checkDone({ input, records, threshold, backend, timeoutMs,
   if (input.stop_hook_active) return null;
   const scope = { sidechain: subagent };
   const who = subagent ? { agent: String(input.agent_type ?? 'subagent').slice(0, 40) } : {};
-  const calls = toolCalls(currentTurn(records, scope), scope);
+  const calls = toolCalls(currentTurn(records, scope), scope).filter((c) => !EDIT_TOOLS.has(c.name) || isProjectFile(c.input?.file_path));
   if (!calls.some((c) => EDIT_TOOLS.has(c.name))) return null;
   if (!unverifiedEdits(calls)) return { trace: { check: 'done', ...who, outcome: 'skipped', reason: 'verified' } };
 
@@ -42,6 +43,13 @@ Does the message claim the work is finished, fixed or working?`;
         : 'Wince: you said the work is done, but nothing has been tested or built since your last edit. Run the relevant tests or build, then report what they showed.',
     },
   };
+}
+
+// Edits outside any repository (scratchpad files, temp folders, commit
+// messages written to a file) are not changes to the project's code.
+export function isProjectFile(filePath) {
+  if (!filePath || !isAbsolute(filePath)) return true;
+  return repoRoot(filePath) !== null;
 }
 
 function lastAssistantText(records, sidechain = false) {

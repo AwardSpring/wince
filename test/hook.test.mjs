@@ -285,3 +285,17 @@ test('the main agent check ignores subagent records, and the subagent check igno
   const subOnly = transcript(dir, [prompt, toolUse('Edit', {}), said('Done.')]);
   assert.equal(runHook('subagent-stop', { agent_transcript_path: subOnly }, { dir, env: { WINCE_FAKE: 'claims-done' } }).stdout, '');
 });
+
+test('edits outside any repository, like scratchpad files, do not count as unverified changes', () => {
+  const dir = project();
+  const scratch = join(mkdtempSync(join(tmpdir(), 'wince-scratch-')), 'commit-message.txt');
+  const path = transcript(dir, [prompt, toolUse('Write', { file_path: scratch }), said('Committed and opened the PR.')]);
+  assert.equal(runHook('stop', { transcript_path: path }, { dir, env: { WINCE_FAKE: 'claims-done' } }).stdout, '');
+});
+
+test('an edit inside a repository still counts', () => {
+  const dir = project();
+  mkdirSync(join(dir, '.git'));
+  const path = transcript(dir, [prompt, toolUse('Edit', { file_path: join(dir, 'src', 'a.ts') }), said('Done, it works.')]);
+  assert.match(JSON.parse(runHook('stop', { transcript_path: path }, { dir, env: { WINCE_FAKE: 'claims-done' } }).stdout).systemMessage, /nothing has been tested/);
+});
