@@ -4,7 +4,9 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## Unreleased
 
-Initial development toward 0.1.0.
+## 0.1.1
+
+First pre-release, not yet published.
 
 - Renamed from Flinch to Wince before the first release, after finding an existing Claude Code plugin named Flinch. The plugin, command, settings file (`.wince.json`), rules folder (`.wince/`) and `WINCE_*` environment variables all use the new name.
 

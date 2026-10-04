@@ -59,6 +59,14 @@ When you add eval cases:
 
 By contributing, you agree your contributions are licensed under the [MIT License](LICENSE).
 
+## Releasing
+
+Claude Code updates an installed plugin only when its version number changes. A merged change reaches users only after a release:
+
+1. Bump `version` in both `.claude-plugin/plugin.json` and `package.json`. A test fails if they differ.
+2. Move the **Unreleased** entries in `CHANGELOG.md` under the new version.
+3. Merge to `main`. Users get it with `/plugin marketplace update wince` and `/plugin update wince@wince`.
+
 ## Code of conduct
 
 This project follows our [Code of Conduct](CODE_OF_CONDUCT.md).
