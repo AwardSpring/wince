@@ -9,6 +9,7 @@ Checked against code.claude.com/docs/en/hooks (2026-10-01). Items marked **verif
 | Risky command | `PreToolUse` (Bash, PowerShell) | `hookSpecificOutput.permissionDecision`: `ask` (nudge mode) or `deny` (block mode), with `permissionDecisionReason` |
 | Rule check | `PostToolUse` (Edit, Write, MultiEdit) | `additionalContext` (nudge mode); block mode is still to be decided |
 | Done without proof | `Stop` | Nudge: `systemMessage` for the user. Block: `decision: "block"` plus a reason, so Claude keeps working |
+| Rules, for shell edits | `Stop`, `SubagentStop`: git status in each repository the turn touched, keeping files modified after the turn began and not written by an edit tool | Nudge: `systemMessage`. Block, and subagents: `decision: "block"` |
 | Done without proof (subagent) | `SubagentStop`, reading `agent_transcript_path` | `decision: "block"` plus a reason, in both modes (see below) |
 | Drift | `UserPromptSubmit` records the task; `PostToolUse` compares against it | `additionalContext` |
 

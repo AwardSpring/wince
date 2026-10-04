@@ -21,7 +21,7 @@ Wince is a [Claude Code](https://code.claude.com) plugin that watches each step 
 
 | Check | When | What it catches | |
 |---|---|---|---|
-| **Your rules** | After each edit | Code that breaks a rule from your own project rules (see [Rules](#rules)) | available |
+| **Your rules** | After each edit, and when the agent finishes for files it changed through shell commands | Code that breaks a rule from your own project rules (see [Rules](#rules)) | available |
 | **Unproven done** | When the agent tries to finish | Claiming success with no test or build run since the last edit | available |
 | **Risky command** | Before each shell command | Destructive or outward-facing commands: force-push, `rm -rf`, publishing, deploying | available |
 | **Drift** | After each tool call | Work that has wandered away from what you asked for | *coming* |
@@ -49,6 +49,12 @@ wince=$(echo "$input" | wince statusline 2>/dev/null)
 ```
 
 `wince statusline` reads the same JSON Claude Code gives your status line command. If `wince` isn't on the path where your status line runs, call `node <plugin folder>/src/cli.mjs statusline` instead.
+
+## Edits made through the shell
+
+Agents don't only edit files with their edit tools. They also write files with scripts, `sed`, or shell redirects: in our own agent sessions about 3 in 10 file writes went that way. When the agent finishes a turn, Wince asks git which project files changed on disk during that turn without going through an edit tool, and checks those changes against your rules too. Those files also count as edits for the done check, so a script that rewrote code and was never tested is caught.
+
+Changes that were already in the working tree before the turn started are left alone. At most 8 such files are checked per turn.
 
 ## Subagents
 

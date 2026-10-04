@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## Unreleased
 
+- End-of-turn sweep: files changed during a turn without an edit tool (for example by a script run from the shell) are rules-checked when the turn ends, and count as edits for the done check. Found in a replay where an agent made every change through Python scripts, so no check saw them.
+
 ## 0.1.1
 
 First pre-release, not yet published.

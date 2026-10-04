@@ -6,6 +6,7 @@ import { readTranscript } from './transcript.mjs';
 import { checkRules } from './checks/rules.mjs';
 import { checkDone } from './checks/done.mjs';
 import { checkRisky } from './checks/risky.mjs';
+import { checkSweep, shellChangedFiles } from './checks/sweep.mjs';
 import { appendEntry, logDir } from './log.mjs';
 
 const HARD_DEADLINE_MS = 25_000;
@@ -40,14 +41,8 @@ export async function run(event, input, env = process.env) {
     if (rules.length === 0) return null;
     result = await checkRules({ ...ctx, rules });
     toOutput = postToolUseOutput;
-  } else if (event === 'stop' && config.checks.done) {
-    const records = await readTranscript(input.transcript_path);
-    result = await checkDone({ ...ctx, records });
-    toOutput = stopOutput;
-  } else if (event === 'subagent-stop' && config.checks.done) {
-    const records = await readTranscript(input.agent_transcript_path);
-    result = await checkDone({ ...ctx, records, subagent: true });
-    toOutput = (finding) => subagentStopOutput(finding, config.subagents);
+  } else if (event === 'stop' || event === 'subagent-stop') {
+    return endOfTurn({ event, input, projectDir, config, backend, ctx });
   }
   if (!result) return null;
 
@@ -55,6 +50,26 @@ export async function run(event, input, env = process.env) {
     output: result.finding ? toOutput(result.finding, config.mode) : null,
     trace: { ...(result.trace.outcome === 'skipped' ? {} : { backend: backend.name }), mode: config.mode, ...result.trace, id: result.finding?.id },
   };
+}
+
+// When a turn ends: rules-check files changed outside the edit tools (by
+// shell scripts, for example), then check for an unverified done claim.
+async function endOfTurn({ event, input, projectDir, config, backend, ctx }) {
+  if (input.stop_hook_active || (!config.checks.done && !config.checks.rules)) return null;
+  const subagent = event === 'subagent-stop';
+  const records = await readTranscript(subagent ? input.agent_transcript_path : input.transcript_path);
+  const shellChanged = await shellChangedFiles({ input, projectDir, records, subagent });
+  const rules = config.checks.rules && shellChanged.length ? await loadProjectRules(projectDir, config) : [];
+  const sweep = rules.length ? await checkSweep({ ...ctx, files: shellChanged, rules, subagent }) : null;
+  const done = config.checks.done ? await checkDone({ ...ctx, records, subagent, shellChanged }) : null;
+  const results = [sweep, done].filter(Boolean);
+  if (results.length === 0) return null;
+
+  const findings = results.map((r) => r.finding).filter(Boolean);
+  const merged = findings.length ? { message: findings.map((f) => f.message).join('\n\n'), notice: findings.map((f) => f.notice ?? f.message).join(' | ') } : null;
+  const output = !merged ? null : subagent ? subagentStopOutput(merged, config.subagents) : stopOutput(merged, config.mode);
+  const traces = results.map((r) => ({ ...(r.trace.outcome === 'skipped' ? {} : { backend: backend.name }), mode: config.mode, ...r.trace, id: r.finding?.id }));
+  return { output, traces };
 }
 
 // Nudge mode asks the user before the command runs; block mode refuses it
@@ -119,7 +134,7 @@ async function main() {
     if (result?.timedOut) {
       await log({ event, outcome: 'timeout', ms: Date.now() - started });
     } else if (result) {
-      await log({ event, session: shortSession(input.session_id), ...result.trace, ms: Date.now() - started });
+      for (const trace of result.traces ?? [result.trace]) await log({ event, session: shortSession(input.session_id), ...trace, ms: Date.now() - started });
       if (result.output) process.stdout.write(JSON.stringify(result.output));
     }
   } catch (e) {
