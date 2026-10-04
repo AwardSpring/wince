@@ -4,7 +4,7 @@ import { mainCheckout } from './worktree.mjs';
 
 export const DEFAULTS = Object.freeze({
   mode: 'nudge',
-  checks: { rules: true, done: true, risky: true },
+  checks: { rules: true, done: true, risky: true, retry: true },
   threshold: 0.6,
   subagents: 'send-back',
   rules: '.wince/rules.json',

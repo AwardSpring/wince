@@ -1,11 +1,14 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, open } from 'node:fs/promises';
 import { EDIT_TOOLS } from './edits.mjs';
 
 const VERIFY = /\b(test|tests|spec|vitest|jest|pytest|mocha|rspec|phpunit|go test|cargo (test|build|check)|dotnet (test|build)|mvn|gradle|tsc|build|lint|typecheck|check|make)\b/i;
 
-export async function readTranscript(path) {
+// tailBytes reads only the end of the file, for checks that run on every
+// command and only need the current turn. The first, partial line is dropped.
+export async function readTranscript(path, { tailBytes } = {}) {
   try {
-    return (await readFile(path, 'utf8'))
+    const text = tailBytes ? await readTail(path, tailBytes) : await readFile(path, 'utf8');
+    return text
       .split('\n')
       .filter((l) => l.trim())
       .flatMap((l) => {
@@ -17,6 +20,20 @@ export async function readTranscript(path) {
       });
   } catch {
     return [];
+  }
+}
+
+async function readTail(path, bytes) {
+  const handle = await open(path, 'r');
+  try {
+    const { size } = await handle.stat();
+    const start = Math.max(0, size - bytes);
+    const buffer = Buffer.alloc(size - start);
+    await handle.read(buffer, 0, buffer.length, start);
+    const text = buffer.toString('utf8');
+    return start === 0 ? text : text.slice(text.indexOf('\n') + 1);
+  } finally {
+    await handle.close();
   }
 }
 

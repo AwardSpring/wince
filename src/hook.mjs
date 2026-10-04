@@ -6,6 +6,7 @@ import { readTranscript } from './transcript.mjs';
 import { checkRules } from './checks/rules.mjs';
 import { checkDone } from './checks/done.mjs';
 import { checkRisky } from './checks/risky.mjs';
+import { checkRetry } from './checks/retry.mjs';
 import { appendEntry, logDir } from './log.mjs';
 
 const HARD_DEADLINE_MS = 25_000;
@@ -23,8 +24,7 @@ export async function run(event, input, env = process.env) {
   if (event === 'session-start') return { output: null, trace: { check: 'session', outcome: 'started' } };
 
   if (event === 'pre-tool-use') {
-    if (!config.checks.risky) return null;
-    const result = checkRisky({ input, projectDir });
+    const result = (config.checks.retry ? await checkRetry({ input }) : null) ?? (config.checks.risky ? checkRisky({ input, projectDir }) : null);
     if (!result) return null;
     return { output: preToolUseOutput(result.finding, config.mode), trace: { backend: 'patterns', mode: config.mode, ...result.trace, id: result.finding.id } };
   }
