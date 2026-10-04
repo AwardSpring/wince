@@ -28,8 +28,8 @@ export async function checkRules({ input, projectDir, rules, threshold, backend,
     finding: {
       check: 'rules',
       id: said,
-      message: `Flinch: this edit to ${filePath} may break "${rule.id}": ${rule.rule}`,
-      notice: `Flinch flagged "${rule.id}" in ${basename(filePath)}`,
+      message: `Wince: this edit to ${filePath} may break "${rule.id}": ${rule.rule}`,
+      notice: `Wince flagged "${rule.id}" in ${basename(filePath)}`,
     },
   };
 }

@@ -8,7 +8,7 @@ const SYSTEM = 'You answer one multiple-choice question. Reply with only a JSON 
 
 // An empty working directory keeps the spawned session from loading the
 // watched project's CLAUDE.md into the judge.
-const quietCwd = mkdtempSync(join(tmpdir(), 'flinch-'));
+const quietCwd = mkdtempSync(join(tmpdir(), 'wince-'));
 
 export const name = 'claude-cli';
 
@@ -23,7 +23,7 @@ export function classify(question, choices, { timeoutMs = 120_000, model = 'haik
   return new Promise((resolve, reject) => {
     const child = spawn('claude', args, {
       cwd: quietCwd,
-      env: { ...process.env, FLINCH_INNER: '1', MAX_THINKING_TOKENS: '0' },
+      env: { ...process.env, WINCE_INNER: '1', MAX_THINKING_TOKENS: '0' },
       windowsHide: true,
     });
     let stdout = '';

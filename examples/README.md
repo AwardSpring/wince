@@ -1,6 +1,6 @@
 # Starter rule sets
 
-Copy the file closest to your stack to `.flinch/rules.json` in your project, then edit it:
+Copy the file closest to your stack to `.wince/rules.json` in your project, then edit it:
 
 - Delete rules that don't apply to you.
 - Change the `applies` patterns to match your folder layout.

@@ -11,9 +11,9 @@ export function timeoutFor(backend) {
 }
 
 export async function selectBackend(env = process.env) {
-  if (env.FLINCH_BACKEND === 'fake') return import('./fake.mjs');
-  if (env.FLINCH_BACKEND) {
-    const pinned = ORDER.find((b) => b.name === env.FLINCH_BACKEND);
+  if (env.WINCE_BACKEND === 'fake') return import('./fake.mjs');
+  if (env.WINCE_BACKEND) {
+    const pinned = ORDER.find((b) => b.name === env.WINCE_BACKEND);
     if (pinned) return pinned;
   }
   return ORDER.find((b) => b.available(env));

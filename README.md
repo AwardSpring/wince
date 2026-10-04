@@ -1,20 +1,20 @@
 <p align="center">
-  <img src="docs/assets/flinch.png" alt="Flinch: your coding agent flinches before the mistake." width="360">
+  <img src="docs/assets/wince.png" alt="Wince: your coding agent winces before the mistake." width="360">
 </p>
 
-Flinch is a [Claude Code](https://code.claude.com) plugin that watches each step your agent takes and speaks up when something looks wrong. You don't have to be watching: it catches edits that break your project's rules, risky commands, and "done!" claims that were never checked.
+Wince is a [Claude Code](https://code.claude.com) plugin that watches each step your agent takes and speaks up when something looks wrong. You don't have to be watching: it catches edits that break your project's rules, risky commands, and "done!" claims that were never checked.
 
-> **Status: pre-release.** Flinch is in active development and not yet published. The **rules**, **unproven done** and **risky command** checks work today. The other checks and the `flinch` commands are designed but not built yet, and are marked *coming* below.
+> **Status: pre-release.** Wince is in active development and not yet published. The **rules**, **unproven done** and **risky command** checks work today. The other checks and the `wince` commands are designed but not built yet, and are marked *coming* below.
 
 ```
 ● Bash(git reset --hard origin/main)
-  ⤷ flinch: this command throws away uncommitted changes. Allow it?
+  ⤷ wince: this command throws away uncommitted changes. Allow it?
 
 ● Edit(src/Orders/OrderQueries.cs)
-  ⤷ flinch: this edit may break "tenant-filter": every query on a tenant-owned table filters by TenantId.
+  ⤷ wince: this edit may break "tenant-filter": every query on a tenant-owned table filters by TenantId.
 
 ● "Fixed! The bug is resolved."
-  ⤷ flinch: you said it's done, but nothing has been tested since your last edit. Verify first.
+  ⤷ wince: you said it's done, but nothing has been tested since your last edit. Verify first.
 ```
 
 ## What it checks
@@ -32,29 +32,29 @@ We also built a *stuck* check (the same command failing again and again, or edit
 
 ## What you see
 
-Flinch is quiet when nothing is wrong. When it speaks, you always see it:
+Wince is quiet when nothing is wrong. When it speaks, you always see it:
 
 | Check | When it fires, you see |
 |---|---|
-| Your rules | A one-line notice, for example `Flinch flagged "tenant-filter" in OrderQueries.cs`. The agent gets the full rule. |
+| Your rules | A one-line notice, for example `Wince flagged "tenant-filter" in OrderQueries.cs`. The agent gets the full rule. |
 | Unproven done | A line under the agent's last message (nudge mode), or the agent keeps working (block mode). A subagent that says done without testing is sent back to test before it reports (see below). |
-| Risky command | Claude Code's permission prompt, with Flinch's reason (nudge mode). |
+| Risky command | Claude Code's permission prompt, with Wince's reason (nudge mode). |
 
-To see that Flinch is running even when it has nothing to say, add it to Claude Code's status line. It shows a segment like `flinch 12 checks · 1 flag · last 3:08pm` for the current session, and nothing in sessions where Flinch isn't loaded:
+To see that Wince is running even when it has nothing to say, add it to Claude Code's status line. It shows a segment like `wince 12 checks · 1 flag · last 3:08pm` for the current session, and nothing in sessions where Wince isn't loaded:
 
 ```bash
 # in your status line script, which receives Claude Code's status JSON on stdin
 input=$(cat)
-flinch=$(echo "$input" | flinch statusline 2>/dev/null)
+wince=$(echo "$input" | wince statusline 2>/dev/null)
 ```
 
-`flinch statusline` reads the same JSON Claude Code gives your status line command. If `flinch` isn't on the path where your status line runs, call `node <plugin folder>/src/cli.mjs statusline` instead.
+`wince statusline` reads the same JSON Claude Code gives your status line command. If `wince` isn't on the path where your status line runs, call `node <plugin folder>/src/cli.mjs statusline` instead.
 
 ## Subagents
 
 Agents a session launches, such as research or build agents, go through the same checks. Their edits get the rules check and their shell commands get the risky command check.
 
-When a subagent says it's done without having tested its edits, Flinch sends it back once to run the tests before it reports to the main agent. This happens in nudge mode too: it never interrupts you, and Claude Code doesn't pass a gentler note from a finishing subagent to anyone. To only log it instead, set `"subagents": "log"` in `.flinch.json`.
+When a subagent says it's done without having tested its edits, Wince sends it back once to run the tests before it reports to the main agent. This happens in nudge mode too: it never interrupts you, and Claude Code doesn't pass a gentler note from a finishing subagent to anyone. To only log it instead, set `"subagents": "log"` in `.wince.json`.
 
 ## How well it works
 
@@ -80,37 +80,37 @@ These numbers come from one codebase and one team's rules. Yours will depend on 
 In Claude Code:
 
 ```
-/plugin marketplace add awardspring/flinch
-/plugin install flinch@flinch
+/plugin marketplace add awardspring/wince
+/plugin install wince@wince
 ```
 
-That's it. Flinch works right away using your existing Claude Code login (see [Backends](#backends)).
+That's it. Wince works right away using your existing Claude Code login (see [Backends](#backends)).
 
 ## Backends
 
-Each check is one small multiple-choice question. Flinch sends it to the fastest backend you have:
+Each check is one small multiple-choice question. Wince sends it to the fastest backend you have:
 
 1. **[Jev](https://typesafe.ai/)** (recommended). Paste a key when the plugin asks, or set `TYPESAFE_API_KEY`. A check takes about 150ms, so it finishes before the agent's next step.
 2. **Anthropic API.** Used when `ANTHROPIC_API_KEY` is set. Each check takes a second or more.
 3. **Claude Code itself.** Always available, with no key needed. It uses your existing login, takes about 4 seconds per check, and counts against your Claude plan's limits.
 
-The agent waits for each check, so a slower backend slows the agent down. `flinch status` (*coming*) will show which backend is active.
+The agent waits for each check, so a slower backend slows the agent down. `wince status` (*coming*) will show which backend is active.
 
 ## Modes
 
-- **Nudge (default):** Flinch tells the agent what it noticed, and the agent decides what to do.
+- **Nudge (default):** Wince tells the agent what it noticed, and the agent decides what to do.
 - **Block:** a rule-breaking edit has to be fixed or explained, an unproven "done" is sent back, and a risky command is refused.
 
-A risky command always stops before it runs. In nudge mode Claude Code asks you to approve it, with Flinch's reason; in block mode it is refused and the agent is told why.
+A risky command always stops before it runs. In nudge mode Claude Code asks you to approve it, with Wince's reason; in block mode it is refused and the agent is told why.
 
 ```json
-// .flinch.json in your project root (all fields optional)
+// .wince.json in your project root (all fields optional)
 {
   "mode": "nudge",
   "checks": { "rules": true, "done": true, "risky": true },
   "threshold": 0.6,
   "subagents": "send-back",
-  "rules": ".flinch/rules.json"
+  "rules": ".wince/rules.json"
 }
 ```
 
@@ -130,11 +130,11 @@ The risky command check runs before every Bash and PowerShell command. It needs 
 
 Each pattern looks at one command at a time, from its start, so `git commit -m "fix -f flag" && git push` is not a force-push. Over about 19,000 real commands from agent sessions, it stopped 13 (about 1 in 1,500), and each was a hard reset, a remote branch delete, or a cloud resource delete.
 
-Turn it off with `"checks": { "risky": false }` in `.flinch.json`.
+Turn it off with `"checks": { "risky": false }` in `.wince.json`.
 
 ## Rules
 
-The rules check works from your project's own rules. Write them in `.flinch/rules.json`, one sentence each:
+The rules check works from your project's own rules. Write them in `.wince/rules.json`, one sentence each:
 
 ```json
 {
@@ -147,17 +147,17 @@ The rules check works from your project's own rules. Write them in `.flinch/rule
 
 | Field | Meaning |
 |---|---|
-| `id` | Short name, shown in nudges and in `flinch log` |
+| `id` | Short name, shown in nudges and in `wince log` |
 | `applies` | File patterns the rule covers. Only rules matching the edited file are sent with a check, so narrow patterns keep checks fast and accurate |
 | `rule` | One sentence the agent's edit is judged against |
 
-**Getting started.** Copy a starter set from [`examples/`](examples/) and edit it, or (*coming*) run `flinch rules init` to draft the file from your `CLAUDE.md` / `AGENTS.md`. Then trim it. Ten sharp rules beat forty vague ones.
+**Getting started.** Copy a starter set from [`examples/`](examples/) and edit it, or (*coming*) run `wince rules init` to draft the file from your `CLAUDE.md` / `AGENTS.md`. Then trim it. Ten sharp rules beat forty vague ones.
 
-**Commit it.** `.flinch/rules.json` belongs in your repository, so everyone on the team, and every agent, is held to the same rules. If you keep it local instead, Flinch still finds it from any git worktree of the same repository. Patterns are matched from the root of the repository or worktree that holds the edited file, so they work the same inside a worktree.
+**Commit it.** `.wince/rules.json` belongs in your repository, so everyone on the team, and every agent, is held to the same rules. If you keep it local instead, Wince still finds it from any git worktree of the same repository. Patterns are matched from the root of the repository or worktree that holds the edited file, so they work the same inside a worktree.
 
 ### Writing rules that work
 
-Flinch judges one edit at a time, with nothing but the rule and the changed lines. A good rule is one a careful reviewer could check by looking at just that diff.
+Wince judges one edit at a time, with nothing but the rule and the changed lines. A good rule is one a careful reviewer could check by looking at just that diff.
 
 | Works well | Works poorly | Why |
 |---|---|---|
@@ -166,17 +166,17 @@ Flinch judges one edit at a time, with nothing but the rule and the changed line
 | "Controller actions only call a service; no database queries in controllers." | "Keep controllers thin." | "Thin" is a judgment; "no queries" is visible |
 | "Async functions that do I/O take a cancellation token." | "Write good async code." | Vague rules turn into false alarms |
 
-Avoid rules about taste, tone, or comment style. In our own testing, judgment-call rules caused most of the false alarms while concrete rules stayed accurate. If a rule needs context outside the edit to decide, such as "this file must also be registered elsewhere", Flinch can't see it and will stay quiet.
+Avoid rules about taste, tone, or comment style. In our own testing, judgment-call rules caused most of the false alarms while concrete rules stayed accurate. If a rule needs context outside the edit to decide, such as "this file must also be registered elsewhere", Wince can't see it and will stay quiet.
 
 ### Test your rules
 
 Before you turn on block mode, check your rules against real edits from your own history:
 
 ```bash
-flinch eval --rules .flinch/rules.json --cases .flinch/cases.jsonl
+wince eval --rules .wince/rules.json --cases .wince/cases.jsonl
 ```
 
-Until the `flinch` command ships, run the same thing from a clone of this repository: `npm run eval -- --rules <your rules> --cases <your cases> --backend jev`.
+Until the `wince` command ships, run the same thing from a clone of this repository: `npm run eval -- --rules <your rules> --cases <your cases> --backend jev`.
 
 Each line of `cases.jsonl` is one real edit, labeled with the rule it breaks or `"none"`:
 
@@ -188,25 +188,25 @@ Include clean edits, especially near misses, as well as rule-breaking ones. The 
 
 ## Commands
 
-The `flinch` command is on your path inside Claude Code while the plugin is enabled.
+The `wince` command is on your path inside Claude Code while the plugin is enabled.
 
 | Command | What it does | |
 |---|---|---|
-| `flinch log` | When the last check ran, how many ran and were flagged, how many stood down (no rule covers the file, or tests already ran), each backend's speed, the rules flagged most, and the latest flags. `--days N` changes the window; `--json` prints raw numbers | available |
-| `flinch statusline` | A one-line summary for the current session, for Claude Code's status line | available |
-| `flinch status` | Active backend, mode, and enabled checks | *coming* |
-| `flinch rules init` | Draft `.flinch/rules.json` from your agent instructions | *coming* |
-| `flinch eval` | Score your rules against a labeled set of real edits | *coming* |
+| `wince log` | When the last check ran, how many ran and were flagged, how many stood down (no rule covers the file, or tests already ran), each backend's speed, the rules flagged most, and the latest flags. `--days N` changes the window; `--json` prints raw numbers | available |
+| `wince statusline` | A one-line summary for the current session, for Claude Code's status line | available |
+| `wince status` | Active backend, mode, and enabled checks | *coming* |
+| `wince rules init` | Draft `.wince/rules.json` from your agent instructions | *coming* |
+| `wince eval` | Score your rules against a labeled set of real edits | *coming* |
 
 ## Privacy
 
-Flinch sends each check the smallest amount of context it can: the edited hunk, the command about to run, or a short summary of recent steps, plus the rules that apply. It never sends whole files or your full conversation. Requests go only to the backend you're using. With the Claude Code backend, nothing leaves your machine except through Claude Code itself.
+Wince sends each check the smallest amount of context it can: the edited hunk, the command about to run, or a short summary of recent steps, plus the rules that apply. It never sends whole files or your full conversation. Requests go only to the backend you're using. With the Claude Code backend, nothing leaves your machine except through Claude Code itself.
 
-Flinch has no telemetry. It keeps a log on your machine, in Claude Code's plugin data folder (`~/.claude/plugins/data/`), with one line per check: the time, a short session id, which check, the file type, the verdict, the confidence, and how long it took. It holds no file paths, code, or rule text, and it is never sent anywhere. The log is capped: at 5 MB the file rolls over and the older copy is replaced, so it never takes more than about 10 MB.
+Wince has no telemetry. It keeps a log on your machine, in Claude Code's plugin data folder (`~/.claude/plugins/data/`), with one line per check: the time, a short session id, which check, the file type, the verdict, the confidence, and how long it took. It holds no file paths, code, or rule text, and it is never sent anywhere. The log is capped: at 5 MB the file rolls over and the older copy is replaced, so it never takes more than about 10 MB.
 
 ## Failing safe
 
-Flinch never makes your agent worse. If a backend is slow, down, or returns an error, the step goes ahead as if Flinch weren't installed. If Flinch isn't sure, it stays quiet: a false alarm costs more trust than a missed catch.
+Wince never makes your agent worse. If a backend is slow, down, or returns an error, the step goes ahead as if Wince weren't installed. If Wince isn't sure, it stays quiet: a false alarm costs more trust than a missed catch.
 
 ## Contributing
 

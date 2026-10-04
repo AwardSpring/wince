@@ -1,10 +1,10 @@
-# Contributing to Flinch
+# Contributing to Wince
 
 Thanks for helping. Bug reports, new checks, better prompts, and eval cases are all welcome.
 
 ## Before you start
 
-- **Bugs:** open an issue with the bug report template. Include `flinch log` output and your Flinch, Claude Code and OS versions.
+- **Bugs:** open an issue with the bug report template. Include `wince log` output and your Wince, Claude Code and OS versions.
 - **New checks or behavior changes:** open an issue to discuss before writing code. Every check costs latency and attention, so new checks must earn their place.
 - **Security issues:** don't open a public issue. See [SECURITY.md](SECURITY.md).
 
@@ -13,8 +13,8 @@ Thanks for helping. Bug reports, new checks, better prompts, and eval cases are 
 Requirements: Node.js 22+ and Claude Code.
 
 ```bash
-git clone https://github.com/awardspring/flinch
-cd flinch
+git clone https://github.com/awardspring/wince
+cd wince
 npm install
 npm test
 ```
@@ -22,17 +22,17 @@ npm test
 To try your local copy in Claude Code without installing it:
 
 ```bash
-claude --plugin-dir ./path/to/flinch
+claude --plugin-dir ./path/to/wince
 ```
 
-Then run `flinch log` inside the session, or `node src/cli.mjs log` from the repo, to see what each check decided.
+Then run `wince log` inside the session, or `node src/cli.mjs log` from the repo, to see what each check decided.
 
-Set `FLINCH_DEBUG=1` to log every check, its input size, the backend, latency, and the verdict to stderr.
+Set `WINCE_DEBUG=1` to log every check, its input size, the backend, latency, and the verdict to stderr.
 
 ## What a good change looks like
 
 - **Quiet beats noisy.** A check should speak only when it's confident. A change that catches more but also raises more false alarms needs eval numbers showing it's worth it.
-- **Fail open.** No error, timeout, or bad config in Flinch may block the agent. Flinch must never exit with a blocking code because of its own failure.
+- **Fail open.** No error, timeout, or bad config in Wince may block the agent. Wince must never exit with a blocking code because of its own failure.
 - **Send less.** Don't widen what a check sends to a backend without saying so in the PR description and updating the Privacy section of the README.
 - **No new runtime dependencies** without discussion. Backends talk to provider APIs with plain `fetch`.
 

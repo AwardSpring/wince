@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { appendEntry, readEntries, findLogDirs, fileKind } from '../src/log.mjs';
 import { summarize, render, statusline } from '../src/cli.mjs';
 
-const dir = () => mkdtempSync(join(tmpdir(), 'flinch-log-'));
+const dir = () => mkdtempSync(join(tmpdir(), 'wince-log-'));
 
 test('appendEntry writes one JSON line per entry with a timestamp', async () => {
   const d = dir();
@@ -36,9 +36,9 @@ test('readEntries skips damaged lines and missing files', async () => {
 
 test('findLogDirs finds marketplace and --plugin-dir data folders only', async () => {
   const home = dir();
-  for (const n of ['flinch-flinch', 'flinch-inline', 'other-plugin']) mkdirSync(join(home, '.claude', 'plugins', 'data', n), { recursive: true });
+  for (const n of ['wince-wince', 'wince-inline', 'other-plugin']) mkdirSync(join(home, '.claude', 'plugins', 'data', n), { recursive: true });
   const found = (await findLogDirs(home)).map((p) => p.split(/[\\/]/).pop()).sort();
-  assert.deepEqual(found, ['flinch-flinch', 'flinch-inline']);
+  assert.deepEqual(found, ['wince-inline', 'wince-wince']);
 });
 
 test('fileKind keeps only the extension', () => {
@@ -81,9 +81,9 @@ test('entries from older versions or with missing fields never break the summary
   assert.doesNotThrow(() => render(s));
 });
 
-test('FLINCH_LOG_DIR overrides the plugin data folder', async () => {
+test('WINCE_LOG_DIR overrides the plugin data folder', async () => {
   const { logDir } = await import('../src/log.mjs');
-  assert.equal(logDir({ FLINCH_LOG_DIR: '/a', CLAUDE_PLUGIN_DATA: '/b' }), '/a');
+  assert.equal(logDir({ WINCE_LOG_DIR: '/a', CLAUDE_PLUGIN_DATA: '/b' }), '/a');
   assert.equal(logDir({ CLAUDE_PLUGIN_DATA: '/b' }), '/b');
 });
 
@@ -106,7 +106,7 @@ test('summarize counts stand-downs and ignores session-start lines as checks', (
   assert.match(render(s, now), /Last check/);
 });
 
-test('statusline shows only the current session, and nothing when Flinch is not loaded', () => {
+test('statusline shows only the current session, and nothing when Wince is not loaded', () => {
   const now = Date.parse('2026-10-10T12:00:00Z');
   const ts = new Date(now - 60_000).toISOString();
   const entries = [
@@ -116,8 +116,8 @@ test('statusline shows only the current session, and nothing when Flinch is not 
     { ts, check: 'rules', outcome: 'flagged', session: 'bbbb2222' },
     { ts, check: 'session', outcome: 'started', session: 'cccc3333' },
   ];
-  assert.match(statusline(entries, 'aaaa1111-rest-of-id', now), /^flinch 2 checks · 1 flag · last /);
-  assert.equal(statusline(entries, 'cccc3333-x', now), 'flinch on');
+  assert.match(statusline(entries, 'aaaa1111-rest-of-id', now), /^wince 2 checks · 1 flag · last /);
+  assert.equal(statusline(entries, 'cccc3333-x', now), 'wince on');
   assert.equal(statusline(entries, 'dddd4444-x', now), '');
   assert.equal(statusline(entries, undefined, now), '');
 });

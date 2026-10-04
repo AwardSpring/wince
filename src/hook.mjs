@@ -10,13 +10,13 @@ import { appendEntry, logDir } from './log.mjs';
 
 const HARD_DEADLINE_MS = 25_000;
 
-// Every path out of this file exits 0. A Flinch failure must never block
+// Every path out of this file exits 0. A Wince failure must never block
 // or slow the agent beyond the deadline, so errors are logged and dropped.
 // Returns { output, trace }: output goes to Claude Code, trace to the log.
 // Null means the check didn't apply here at all (no rules file, no edits
 // this turn, a safe command) and nothing is logged.
 export async function run(event, input, env = process.env) {
-  if (env.FLINCH_INNER) return null;
+  if (env.WINCE_INNER) return null;
   const projectDir = env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd();
   const config = await loadConfig(projectDir);
 
@@ -124,7 +124,7 @@ async function main() {
     }
   } catch (e) {
     await log({ event, outcome: 'error', error: String(e?.message ?? e).slice(0, 120), ms: Date.now() - started });
-    if (process.env.FLINCH_DEBUG) process.stderr.write(`flinch: ${e?.stack ?? e}\n`);
+    if (process.env.WINCE_DEBUG) process.stderr.write(`wince: ${e?.stack ?? e}\n`);
   }
   // Let Node exit on its own. process.exit() while a fetch socket is still
   // closing aborts Node on Windows (libuv assertion in win/async.c).

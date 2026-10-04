@@ -52,7 +52,7 @@ export function localTime(ts, now = Date.now()) {
 }
 
 export function render(s, now = Date.now()) {
-  const lines = [`Flinch, last ${s.days} day${s.days === 1 ? '' : 's'}`, ''];
+  const lines = [`Wince, last ${s.days} day${s.days === 1 ? '' : 's'}`, ''];
   if (s.total === 0) return [...lines, s.sessions ? `Loaded in ${s.sessions} session${s.sessions === 1 ? '' : 's'}, no checks yet.` : 'No checks logged yet.'].join('\n');
   const o = s.outcomes;
   const judged = s.total - o.skipped;
@@ -81,17 +81,17 @@ export function render(s, now = Date.now()) {
 }
 
 // One short segment for Claude Code's status line, for the session whose
-// id Claude Code passes in. Empty when Flinch isn't loaded in that session,
-// so the status line of a session without Flinch is unchanged.
+// id Claude Code passes in. Empty when Wince isn't loaded in that session,
+// so the status line of a session without Wince is unchanged.
 export function statusline(entries, sessionId, now = Date.now()) {
   const short = typeof sessionId === 'string' ? sessionId.slice(0, 8) : '';
   if (!short) return '';
   const mine = entries.filter((e) => e && e.session === short);
   if (!mine.length) return '';
   const checks = mine.filter(isCheck);
-  if (!checks.length) return 'flinch on';
+  if (!checks.length) return 'wince on';
   const flags = checks.filter((e) => e.outcome === 'flagged').length;
-  const parts = [`flinch ${checks.length} check${checks.length === 1 ? '' : 's'}`];
+  const parts = [`wince ${checks.length} check${checks.length === 1 ? '' : 's'}`];
   if (flags) parts.push(`${flags} flag${flags === 1 ? '' : 's'}`);
   parts.push(`last ${localTime(checks.at(-1).ts, now)}`);
   return parts.join(' · ');
@@ -108,7 +108,7 @@ async function readStdinJson() {
 }
 
 async function allEntries() {
-  const dirs = process.env.FLINCH_LOG_DIR || process.env.CLAUDE_PLUGIN_DATA ? [logDir(process.env)] : await findLogDirs();
+  const dirs = process.env.WINCE_LOG_DIR || process.env.CLAUDE_PLUGIN_DATA ? [logDir(process.env)] : await findLogDirs();
   return (await Promise.all(dirs.map(readEntries))).flat().sort((a, b) => String(a.ts).localeCompare(String(b.ts)));
 }
 
@@ -126,7 +126,7 @@ async function main() {
     return;
   }
   if (command !== 'log') {
-    process.stdout.write('Usage: flinch log [--days N] [--json]\n       flinch statusline   (reads Claude Code status line JSON on stdin)\n');
+    process.stdout.write('Usage: wince log [--days N] [--json]\n       wince statusline   (reads Claude Code status line JSON on stdin)\n');
     process.exitCode = command ? 1 : 0;
     return;
   }

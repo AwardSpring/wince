@@ -13,7 +13,7 @@ export function checkRisky({ input, projectDir }) {
     finding: {
       check: 'risky',
       id: risk.id,
-      message: `Flinch: this command ${risk.label}: ${risk.command.slice(0, 200)}`,
+      message: `Wince: this command ${risk.label}: ${risk.command.slice(0, 200)}`,
     },
   };
 }

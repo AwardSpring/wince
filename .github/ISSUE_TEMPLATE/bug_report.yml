@@ -1,5 +1,5 @@
 name: Bug report
-description: Flinch did something wrong, or stayed quiet when it should have spoken.
+description: Wince did something wrong, or stayed quiet when it should have spoken.
 labels: [bug]
 body:
   - type: dropdown
@@ -7,8 +7,8 @@ body:
     attributes:
       label: What went wrong?
       options:
-        - False alarm (Flinch flagged something fine)
-        - Missed catch (Flinch stayed quiet)
+        - False alarm (Wince flagged something fine)
+        - Missed catch (Wince stayed quiet)
         - Slowed down or blocked my agent
         - Install or setup problem
         - Something else
@@ -23,10 +23,10 @@ body:
   - type: textarea
     id: log
     attributes:
-      label: "`flinch log` output"
+      label: "`wince log` output"
       description: It holds no code or file paths, but check before pasting.
       render: text
   - type: input
     id: versions
     attributes:
-      label: Flinch, Claude Code, and OS versions
+      label: Wince, Claude Code, and OS versions
