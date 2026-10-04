@@ -90,7 +90,7 @@ That's it. Wince works right away using your existing Claude Code login (see [Ba
 
 Each check is one small multiple-choice question. Wince sends it to the fastest backend you have:
 
-1. **[Jev](https://typesafe.ai/)** (recommended). Paste a key when the plugin asks, or set `TYPESAFE_API_KEY`. A check takes about 150ms, so it finishes before the agent's next step.
+1. **[Jev](https://typesafe.ai/)** (recommended). Set the plugin's `jev_api_key` option (`/plugin configure wince@wince`), or set `TYPESAFE_API_KEY`. Claude Code stores the option as a secret, alongside its own login. A check takes about 150ms, so it finishes before the agent's next step.
 2. **Anthropic API.** Used when `ANTHROPIC_API_KEY` is set. Each check takes a second or more.
 3. **Claude Code itself.** Always available, with no key needed. It uses your existing login, takes about 4 seconds per check, and counts against your Claude plan's limits.
 
