@@ -24,4 +24,5 @@ Initial development toward 0.1.0.
 - `wince log` shows when the last check ran and how many checks stood down. `wince statusline` prints a one-line summary of the current session for Claude Code's status line, and nothing for sessions without Wince.
 - Subagents: a subagent that says done without testing its edits is sent back once to test, in both modes; `"subagents": "log"` only logs it. A PowerShell test or build run now counts as testing.
 - Rule patterns are matched from the root of the repository or worktree holding the edited file, so edits in a worktree nested inside the project match the same rules.
+- The done check ignores edits outside any repository, such as scratchpad files, temp folders and commit messages written to a file, so finishing a commit or PR turn no longer reads as untested code.
 - Fails open on any backend error, timeout, malformed input or bad config.
