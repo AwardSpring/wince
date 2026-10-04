@@ -125,20 +125,21 @@ async function readStdin() {
 async function main() {
   const event = process.argv[2];
   const started = Date.now();
+  let input = {};
   try {
-    const input = await readStdin();
+    input = await readStdin();
     const result = await Promise.race([
       run(event, input),
       new Promise((resolve) => setTimeout(() => resolve({ timedOut: true }), HARD_DEADLINE_MS).unref()),
     ]);
     if (result?.timedOut) {
-      await log({ event, outcome: 'timeout', ms: Date.now() - started });
+      await log({ event, session: shortSession(input.session_id), outcome: 'timeout', ms: Date.now() - started });
     } else if (result) {
       for (const trace of result.traces ?? [result.trace]) await log({ event, session: shortSession(input.session_id), ...trace, ms: Date.now() - started });
       if (result.output) process.stdout.write(JSON.stringify(result.output));
     }
   } catch (e) {
-    await log({ event, outcome: 'error', error: String(e?.message ?? e).slice(0, 120), ms: Date.now() - started });
+    await log({ event, session: shortSession(input?.session_id), outcome: 'error', error: String(e?.message ?? e).slice(0, 120), ms: Date.now() - started });
     if (process.env.WINCE_DEBUG) process.stderr.write(`wince: ${e?.stack ?? e}\n`);
   }
   // Let Node exit on its own. process.exit() while a fetch socket is still

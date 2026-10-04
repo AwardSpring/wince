@@ -4,7 +4,7 @@ import * as claudeCli from './claude-cli.mjs';
 
 const ORDER = [jev, anthropic, claudeCli];
 
-const TIMEOUT_MS = { jev: 1500, anthropic: 3000, 'claude-cli': 20_000, fake: 1000 };
+const TIMEOUT_MS = { jev: 3000, anthropic: 3000, 'claude-cli': 20_000, fake: 1000 };
 
 export function timeoutFor(backend) {
   return TIMEOUT_MS[backend.name] ?? 3000;

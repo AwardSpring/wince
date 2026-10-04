@@ -4,7 +4,12 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## Unreleased
 
+## 0.1.2
+
 - End-of-turn sweep: files changed during a turn without an edit tool (for example by a script run from the shell) are rules-checked when the turn ends, and count as edits for the done check. Found in a replay where an agent made every change through Python scripts, so no check saw them.
+- Jev calls may take up to 3 seconds before failing open (was 1.5), after timeouts with several sessions running at once.
+- Error and timeout log entries record which session they came from.
+- The README says the done check knows a test or build was started, not whether it passed.
 
 ## 0.1.1
 

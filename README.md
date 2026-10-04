@@ -22,7 +22,7 @@ Wince is a [Claude Code](https://code.claude.com) plugin that watches each step 
 | Check | When | What it catches | |
 |---|---|---|---|
 | **Your rules** | After each edit, and when the agent finishes for files it changed through shell commands | Code that breaks a rule from your own project rules (see [Rules](#rules)) | available |
-| **Unproven done** | When the agent tries to finish | Claiming success with no test or build run since the last edit | available |
+| **Unproven done** | When the agent tries to finish | Claiming success with no test or build run since the last edit. It knows a test or build was started, not whether it passed. | available |
 | **Risky command** | Before each shell command | Destructive or outward-facing commands: force-push, `rm -rf`, publishing, deploying | available |
 | **Drift** | After each tool call | Work that has wandered away from what you asked for | *coming* |
 
@@ -79,6 +79,14 @@ Ranges are the spread across the three runs.
 - **Claude catches about as many, but it's noisy.** Identical runs raised between 2 and 6 false alarms. Its confidence is 0.85 to 0.95 whether it's right or wrong, so the threshold can't filter it. A few checks per run also gave no usable answer; those fail open.
 - **In a live Claude Code session**, a Jev check takes about 300ms from start to finish. On the Claude Code fallback it takes about 4 seconds.
 
+### Replaying real work
+
+We also replayed 6 real bug fixes that had been merged in that codebase: 2 backend, 2 frontend and 2 that touched both, chosen by a fixed rule before looking at results. For each one, an agent started from the commit before the fix, with only the original bug report, and did the work with Wince loaded. A separate reviewer, not shown Wince's verdicts, then checked every change against the same rules.
+
+- The reviewer found **no rule breaks** in any of the 6 changes, and Wince missed none.
+- Wince raised **3 false alarms, all from one comment-style rule** ("comments state rules, not guarantees"). That is a judgment call no single diff can settle, so we removed it (see [Writing rules that work](#writing-rules-that-work)). Without it, there were **no false alarms**.
+- One agent made every change by running scripts from the shell, which the per-edit check never saw. That is why Wince now also checks shell edits when a turn ends (see [Edits made through the shell](#edits-made-through-the-shell)). On a rerun of that task, all 4 changed files were checked.
+
 These numbers come from one codebase and one team's rules. Yours will depend on how concrete your rules are (see [Writing rules that work](#writing-rules-that-work)), so test them on your own history before you rely on block mode.
 
 ## Install
@@ -96,7 +104,7 @@ That's it. Wince works right away using your existing Claude Code login (see [Ba
 
 Each check is one small multiple-choice question. Wince sends it to the fastest backend you have:
 
-1. **[Jev](https://typesafe.ai/)** (recommended). Set the plugin's `jev_api_key` option (`/plugin configure wince@wince`), or set `TYPESAFE_API_KEY`. Claude Code stores the option as a secret, alongside its own login. A check takes about 150ms, so it finishes before the agent's next step.
+1. **[Jev](https://typesafe.ai/)** (recommended). Set the plugin's `jev_api_key` option (`/plugin configure wince@wince`), or set `TYPESAFE_API_KEY`. Claude Code stores the option as a secret, alongside its own login. A check takes about 150 to 400ms, so it finishes before the agent's next step.
 2. **Anthropic API.** Used when `ANTHROPIC_API_KEY` is set. Each check takes a second or more.
 3. **Claude Code itself.** Always available, with no key needed. It uses your existing login, takes about 4 seconds per check, and counts against your Claude plan's limits.
 
