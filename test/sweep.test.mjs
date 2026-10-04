@@ -140,3 +140,13 @@ test('Git Bash paths become Windows paths on Windows', () => {
   if (process.platform === 'win32') assert.equal(toLocalPath('/c/Code/x'), 'C:/Code/x');
   else assert.equal(toLocalPath('/c/Code/x'), '/c/Code/x');
 });
+
+test('absolute paths in shell commands are found on every platform, URLs are not', async () => {
+  const { candidateRoots: roots } = await import('../src/sweep.mjs');
+  const dir = repo();
+  const posix = dir.replaceAll('\\', '/');
+  for (const command of [`cd ${posix} && python fix.py`, `cd "${posix}"; ls`, `python ${posix}/src/a.ts`]) {
+    assert.ok(roots({ cwd: tmpdir(), projectDir: tmpdir(), calls: [{ name: 'Bash', input: { command } }] }).includes(dir), command);
+  }
+  assert.deepEqual(roots({ cwd: tmpdir(), projectDir: tmpdir(), calls: [{ name: 'Bash', input: { command: 'curl https://github.com/AwardSpring/wince' } }] }), []);
+});

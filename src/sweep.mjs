@@ -7,7 +7,10 @@ import { EDIT_TOOLS } from './edits.mjs';
 
 const run = promisify(execFile);
 const SHELLS = new Set(['Bash', 'PowerShell']);
-const ABS_PATH = /(?:[A-Za-z]:[\\/]|\/[a-z]\/)[^\s"'`;|&<>()]+/g;
+// Windows (C:\x, C:/x), Git Bash (/c/x) and Unix (/home/x) absolute paths.
+// The lookbehinds keep URLs (https://host/x) and relative paths (./x, ~/x)
+// from matching.
+const ABS_PATH = /(?:(?<![\w])[A-Za-z]:[\\/](?![\\/])|(?<![:\w/.~])\/(?=[\w.~-]))[^\s"'`;|&<>()]+/g;
 
 // The repository root at or above a folder, or null.
 export function repoRootOfDir(dir) {
