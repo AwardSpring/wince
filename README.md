@@ -1,6 +1,6 @@
-<p align="center">
-  <img src="docs/assets/wince.png" alt="Wince: your coding agent winces before the mistake." width="360">
-</p>
+# Wince
+
+**Your coding agent winces before the mistake.**
 
 Wince is a [Claude Code](https://code.claude.com) plugin that watches each step your agent takes and speaks up when something looks wrong. You don't have to be watching: it catches edits that break your project's rules, risky commands, and "done!" claims that were never checked.
 
