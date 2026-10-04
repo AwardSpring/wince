@@ -37,7 +37,7 @@ test('readEntries skips damaged lines and missing files', async () => {
 test('findLogDirs finds marketplace and --plugin-dir data folders only', async () => {
   const home = dir();
   for (const n of ['wince-wince', 'wince-inline', 'other-plugin']) mkdirSync(join(home, '.claude', 'plugins', 'data', n), { recursive: true });
-  const found = (await findLogDirs(home)).map((p) => p.split(/[\\/]/).pop()).sort();
+  const found = (await findLogDirs(home, {})).map((p) => p.split(/[\\/]/).pop()).sort();
   assert.deepEqual(found, ['wince-inline', 'wince-wince']);
 });
 
@@ -120,4 +120,13 @@ test('statusline shows only the current session, and nothing when Wince is not l
   assert.equal(statusline(entries, 'cccc3333-x', now), 'wince on');
   assert.equal(statusline(entries, 'dddd4444-x', now), '');
   assert.equal(statusline(entries, undefined, now), '');
+});
+
+test('findLogDirs follows CLAUDE_CONFIG_DIR when it is set', async () => {
+  const home = dir();
+  const custom = dir();
+  mkdirSync(join(home, '.claude', 'plugins', 'data', 'wince-inline'), { recursive: true });
+  mkdirSync(join(custom, 'plugins', 'data', 'wince-wince'), { recursive: true });
+  const found = (await findLogDirs(home, { CLAUDE_CONFIG_DIR: custom })).map((p) => p.split(/[\\/]/).pop());
+  assert.deepEqual(found, ['wince-wince']);
 });

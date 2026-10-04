@@ -36,8 +36,11 @@ export async function readEntries(dir) {
 
 // Plugin data folders are named <plugin>-<marketplace>, e.g. wince-wince
 // when installed from the marketplace and wince-inline with --plugin-dir.
-export async function findLogDirs(home = homedir()) {
-  const root = join(home, '.claude', 'plugins', 'data');
+// Claude Code keeps plugin data under CLAUDE_CONFIG_DIR when it is set, and
+// under ~/.claude otherwise.
+export async function findLogDirs(home = homedir(), env = process.env) {
+  const configDir = env.CLAUDE_CONFIG_DIR || join(home, '.claude');
+  const root = join(configDir, 'plugins', 'data');
   const names = await readdir(root).catch(() => []);
   return names.filter((n) => n === 'wince' || n.startsWith('wince-')).map((n) => join(root, n));
 }
